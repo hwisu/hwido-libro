@@ -1,47 +1,55 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-ffi
 
 import { Command } from "cliffy/command/mod.ts";
-import { DB } from "sqlite";
+import { Database } from "./db.ts";
+import {
+  handleAddCommand,
+  handleShowCommand,
+  handleReviewCommand,
+  handleReportCommand,
+  handleImportMarkdownCommand,
+} from "./commands/index.ts";
 
-const db = new DB("libro.db");
-// 테이블 생성 (최초 실행 시)
-db.query(`
-  CREATE TABLE IF NOT EXISTS books (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    author TEXT NOT NULL,
-    pages INTEGER,
-    pub_year INTEGER,
-    genre TEXT
-  );
-`);
-db.query(`
-  CREATE TABLE IF NOT EXISTS reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    book_id INTEGER,
-    date_read DATE,
-    rating INTEGER,
-    review TEXT,
-    FOREIGN KEY(book_id) REFERENCES books(id)
-  );
-`);
+// Initialize database
+const db = new Database("libro.db");
 
 await new Command()
   .name("libro")
   .version("0.1.0")
   .description("A simple reading tracker CLI built with Deno")
+
   .command("add", "Add a new book")
     .action(async () => {
-      // 사용자 입력 로직…
+      await handleAddCommand(db);
     })
-  .command("show", "Show book(s)")
+
+  .command("show [id:number]", "Show book(s)")
     .option("--year <year:number>", "Show by year")
-    .action((options) => {
-      // 조회 로직…
+    .option("--json", "Output as JSON", { default: false })
+    .action((options, id) => {
+      handleShowCommand(db, { id, ...options });
     })
+
+  .command("review <id:number>", "Add review to a book")
+    .action(async (_, id) => {
+      await handleReviewCommand(db, id);
+    })
+
   .command("report", "Generate reports")
-    .option("--author", "Report by author")
+    .option("--author", "Report by author", { default: false })
+    .option("--year", "Report by year", { default: false })
     .action((options) => {
-      // 리포트 로직…
+      handleReportCommand(db, options);
     })
+
+  .command("import-markdown", "Import books and reviews from markdown files")
+    .option("--path <path:string>", "Path to directory with markdown files", { default: "data/assets" })
+    .option("--sync", "Sync database to markdown files", { default: false })
+    .action(async (options) => {
+      await handleImportMarkdownCommand(db, options);
+    })
+
   .parse(Deno.args);
+
+// Close the database connection when the program finishes
+db.close();

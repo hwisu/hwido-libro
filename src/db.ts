@@ -11,6 +11,11 @@ export class Database {
     this.migrate();
   }
 
+  /** Close the database connection */
+  close(): void {
+    this.#db.close();
+  }
+
   /** Apply schema updates if version changed. */
   migrate() {
     // Ensure foreign key constraints are enabled.
@@ -111,5 +116,122 @@ export class Database {
       pub_year,
       genre,
     }));
+  }
+
+  /**
+   * Update an existing book in the database
+   */
+  updateBook(bookId: number, book: {
+    title?: string;
+    author?: string;
+    pages?: number;
+    pub_year?: number;
+    genre?: string;
+  }): void {
+    const updateParts = [];
+    const params = [];
+
+    // 업데이트할 필드만 쿼리에 포함
+    if (book.title !== undefined) {
+      updateParts.push("title = ?");
+      params.push(book.title);
+    }
+    if (book.author !== undefined) {
+      updateParts.push("author = ?");
+      params.push(book.author);
+    }
+    if (book.pages !== undefined) {
+      updateParts.push("pages = ?");
+      params.push(book.pages);
+    }
+    if (book.pub_year !== undefined) {
+      updateParts.push("pub_year = ?");
+      params.push(book.pub_year);
+    }
+    if (book.genre !== undefined) {
+      updateParts.push("genre = ?");
+      params.push(book.genre);
+    }
+
+    // 업데이트할 항목이 없으면 종료
+    if (updateParts.length === 0) {
+      return;
+    }
+
+    // 마지막 매개변수로 bookId 추가
+    params.push(bookId);
+
+    // 쿼리 실행
+    this.#db.query(
+      `UPDATE books SET ${updateParts.join(", ")} WHERE id = ?;`,
+      params,
+    );
+  }
+
+  /**
+   * Get all reviews for a book
+   */
+  getReviews(bookId: number): Array<{
+    id: number;
+    book_id: number;
+    date_read: string;
+    rating: number;
+    review: string;
+  }> {
+    return this.#db.query<[number, number, string, number, string]>(
+      `SELECT id, book_id, date_read, rating, review FROM reviews WHERE book_id = ? ORDER BY date_read;`,
+      [bookId],
+    ).map(([id, book_id, date_read, rating, review]) => ({
+      id,
+      book_id,
+      date_read,
+      rating,
+      review,
+    }));
+  }
+
+  /**
+   * Update an existing review in the database
+   */
+  updateReview(reviewId: number, review: {
+    book_id?: number;
+    date_read?: string;
+    rating?: number;
+    review?: string;
+  }): void {
+    const updateParts = [];
+    const params = [];
+
+    // 업데이트할 필드만 쿼리에 포함
+    if (review.book_id !== undefined) {
+      updateParts.push("book_id = ?");
+      params.push(review.book_id);
+    }
+    if (review.date_read !== undefined) {
+      updateParts.push("date_read = ?");
+      params.push(review.date_read);
+    }
+    if (review.rating !== undefined) {
+      updateParts.push("rating = ?");
+      params.push(review.rating);
+    }
+    if (review.review !== undefined) {
+      updateParts.push("review = ?");
+      params.push(review.review);
+    }
+
+    // 업데이트할 항목이 없으면 종료
+    if (updateParts.length === 0) {
+      return;
+    }
+
+    // 마지막 매개변수로 reviewId 추가
+    params.push(reviewId);
+
+    // 쿼리 실행
+    this.#db.query(
+      `UPDATE reviews SET ${updateParts.join(", ")} WHERE id = ?;`,
+      params,
+    );
   }
 }
