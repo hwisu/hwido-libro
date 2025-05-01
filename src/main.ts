@@ -9,13 +9,21 @@ import {
   handleReportCommand,
   handleImportMarkdownCommand,
 } from "./commands/index.ts";
+import { getHwidoBanner, colors } from "./utils/index.ts";
 
 // Initialize database
 const db = new Database("libro.db");
 
-await new Command()
+// 도움말을 요청했을 때 배너 표시
+// Display banner when help is requested
+if (Deno.args.includes("--help") || Deno.args.includes("-h") || Deno.args.length === 0) {
+  console.log(colors.cyan(getHwidoBanner()));
+}
+
+// Create the main command
+const command = new Command()
   .name("libro")
-  .version("0.1.0")
+  .version("0.1.4")
   .description("A command-line book tracking tool with data stored in SQLite")
 
   // Original Libro commands
@@ -50,9 +58,10 @@ await new Command()
     .option("--sync", "Sync database to markdown files", { default: false })
     .action(async (options) => {
       await handleImportMarkdownCommand(db, options);
-    })
+    });
 
-  .parse(Deno.args);
+// Parse and execute the command
+await command.parse(Deno.args);
 
 // Close the database connection when the program finishes
 db.close();

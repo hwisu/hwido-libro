@@ -21,3 +21,7 @@ export {
   editWithVim,
   editWithSystemEditor
 } from "./editor.ts";
+export {
+  getHwidoBanner,
+  getSimpleDivider
+} from "./banner.ts";
