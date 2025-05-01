@@ -2,8 +2,8 @@ import { Database } from "../db.ts";
 import { colors, Table, barChart } from "../utils/index.ts";
 
 export interface ReportOptions {
-  author?: boolean;
-  year?: boolean;
+  author?: string | boolean;
+  year?: number | boolean;
 }
 
 // Define book and review interfaces
@@ -42,9 +42,9 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
   console.log(colors.bold(colors.green(`Library Statistics (${books.length} books)`)));
 
   if (author) {
-    authorReport(books);
+    authorReport(books, typeof author === 'string' ? author : undefined);
   } else if (year) {
-    yearReport(books);
+    yearReport(books, typeof year === 'number' ? year : undefined);
   } else {
     // Default to a summary report with tables
     console.log(`\nTotal books: ${books.length}`);
@@ -86,9 +86,33 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
 /**
  * Generate a report of books grouped by author
  */
-function authorReport(books: Book[]): void {
+function authorReport(books: Book[], filterAuthor?: string): void {
+  // If filterAuthor is provided, only show books by that author
+  const filteredBooks = filterAuthor
+    ? books.filter(book => book.author.toLowerCase().includes(filterAuthor.toLowerCase()))
+    : books;
+
+  if (filterAuthor && filteredBooks.length === 0) {
+    console.log(`No books found by author matching "${filterAuthor}".`);
+    return;
+  }
+
+  if (filterAuthor) {
+    console.log(`\nBooks by author matching "${filterAuthor}":`);
+
+    const table = new Table({ zebra: true });
+    table.header(["Title", "Year", "Genre"]);
+
+    filteredBooks.forEach(book => {
+      table.row([book.title, book.pub_year?.toString() || "Unknown", book.genre || "Unknown"]);
+    });
+
+    table.render();
+    return;
+  }
+
   // Group books by author
-  const authorBooks = books.reduce((acc, book) => {
+  const authorBooks = filteredBooks.reduce((acc, book) => {
     acc[book.author] = acc[book.author] || [];
     acc[book.author].push(book);
     return acc;
@@ -129,7 +153,7 @@ function authorReport(books: Book[]): void {
 /**
  * Generate a report of books grouped by publication year
  */
-function yearReport(books: Book[]): void {
+function yearReport(books: Book[], filterYear?: number): void {
   // Filter out books without publication year
   const booksWithYear = books.filter(book => book.pub_year);
 
@@ -138,8 +162,32 @@ function yearReport(books: Book[]): void {
     return;
   }
 
+  // If filterYear is provided, only show books from that year
+  const filteredBooks = filterYear
+    ? booksWithYear.filter(book => book.pub_year === filterYear)
+    : booksWithYear;
+
+  if (filterYear && filteredBooks.length === 0) {
+    console.log(`No books found from year ${filterYear}.`);
+    return;
+  }
+
+  if (filterYear) {
+    console.log(`\nBooks from ${filterYear}:`);
+
+    const table = new Table({ zebra: true });
+    table.header(["Title", "Author"]);
+
+    filteredBooks.forEach(book => {
+      table.row([book.title, book.author]);
+    });
+
+    table.render();
+    return;
+  }
+
   // Group books by year
-  const yearBooks = booksWithYear.reduce((acc, book) => {
+  const yearBooks = filteredBooks.reduce((acc, book) => {
     const year = book.pub_year as number;
     acc[year] = acc[year] || [];
     acc[year].push(book);

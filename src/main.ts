@@ -36,8 +36,8 @@ await new Command()
     })
 
   .command("report", "Generate reports")
-    .option("--author", "Report by author", { default: false })
-    .option("--year", "Report by year", { default: false })
+    .option("--author <author:string>", "Filter report by author")
+    .option("--year <year:number>", "Filter report by publication year")
     .action((options) => {
       handleReportCommand(db, options);
     })
