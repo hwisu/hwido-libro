@@ -1,9 +1,12 @@
 import { Database } from "../db.ts";
-import { colors, Table, barChart } from "../utils/index.ts";
+import { colors } from "../utils/index.ts";
+import { Table } from "cliffy/table/mod.ts";
+import { barChart } from "../utils/index.ts";
 
 export interface ReportOptions {
   author?: string | boolean;
   year?: number | boolean;
+  years?: boolean;
 }
 
 // Define book and review interfaces
@@ -29,7 +32,7 @@ interface Book {
  * Handles the 'report' command to generate statistics about the books
  */
 export function handleReportCommand(db: Database, options: ReportOptions): void {
-  const { author, year } = options;
+  const { author, year, years } = options;
 
   // Get all books
   const books = db.getBooks() as Book[];
@@ -45,6 +48,8 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
     authorReport(books, typeof author === 'string' ? author : undefined);
   } else if (year) {
     yearReport(books, typeof year === 'number' ? year : undefined);
+  } else if (years) {
+    yearReport(books); // Show years chart without specific year filter
   } else {
     // Default to a summary report with tables
     console.log(`\nTotal books: ${books.length}`);
@@ -100,14 +105,20 @@ function authorReport(books: Book[], filterAuthor?: string): void {
   if (filterAuthor) {
     console.log(`\nBooks by author matching "${filterAuthor}":`);
 
-    const table = new Table({ zebra: true });
-    table.header(["Title", "Year", "Genre"]);
+    const authorBooksTable = new Table()
+      .header(["Title", "Year", "Genre"])
+      .border(true)
+      .padding(1);
 
     filteredBooks.forEach(book => {
-      table.row([book.title, book.pub_year?.toString() || "Unknown", book.genre || "Unknown"]);
+      authorBooksTable.push([
+        book.title,
+        book.pub_year?.toString() || "Unknown",
+        book.genre || "Unknown"
+      ]);
     });
 
-    table.render();
+    console.log(authorBooksTable.toString());
     return;
   }
 
@@ -118,91 +129,104 @@ function authorReport(books: Book[], filterAuthor?: string): void {
     return acc;
   }, {} as Record<string, Book[]>);
 
-  // Create a count map for barChart
-  const authorCounts: Record<string, number> = {};
-  Object.entries(authorBooks).forEach(([author, books]) => {
-    authorCounts[author] = books.length;
+  // Sort authors by number of books (descending)
+  const sortedAuthors = Object.entries(authorBooks)
+    .sort((a, b) => b[1].length - a[1].length)
+    // Only include authors with multiple books
+    .filter(([_, books]) => books.length > 1);
+
+  // Display a simple table in the style of the original Libro
+  console.log("\n         Most Read Authors\n");
+  console.log("  Author                Books Read");
+  console.log(" ──────────────────────────────────");
+
+  sortedAuthors.forEach(([author, books]) => {
+    // Format to match original Libro with proper padding
+    const authorStr = author.padEnd(20, " ").substring(0, 20);
+    const countStr = books.length.toString();
+    console.log(`  ${authorStr}  ${countStr}`);
   });
 
-  console.log("\nBooks by Author:");
-  console.log(barChart(authorCounts, {
-    maxBarWidth: 25,
-    sort: "desc",
-    colorize: true
-  }));
-
-  // Add a detail table with the top 5 authors
-  const top5Authors = Object.entries(authorBooks)
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 5);
-
-  if (top5Authors.length > 0) {
-    console.log("\nTop authors and their books:");
-
-    const table = new Table({ zebra: true });
-    table.header(["Author", "Books"]);
-
-    top5Authors.forEach(([author, books]) => {
-      table.row([author, books.map(b => b.title).join(", ")]);
-    });
-
-    table.render();
-  }
+  console.log("");
 }
 
 /**
- * Generate a report of books grouped by publication year
+ * Generate a report of books read by year
  */
 function yearReport(books: Book[], filterYear?: number): void {
-  // Filter out books without publication year
-  const booksWithYear = books.filter(book => book.pub_year);
+  // Get all books with reviews to determine read dates
+  const booksWithReviews = books.filter(book => book.reviews && book.reviews.length > 0);
 
-  if (booksWithYear.length === 0) {
-    console.log("No books with publication year data.");
+  if (booksWithReviews.length === 0) {
+    console.log("No books with review data to show read dates.");
     return;
   }
 
-  // If filterYear is provided, only show books from that year
-  const filteredBooks = filterYear
-    ? booksWithYear.filter(book => book.pub_year === filterYear)
-    : booksWithYear;
-
-  if (filterYear && filteredBooks.length === 0) {
-    console.log(`No books found from year ${filterYear}.`);
-    return;
-  }
-
+  // If a specific year is requested, show details for that year
   if (filterYear) {
-    console.log(`\nBooks from ${filterYear}:`);
-
-    const table = new Table({ zebra: true });
-    table.header(["Title", "Author"]);
-
-    filteredBooks.forEach(book => {
-      table.row([book.title, book.author]);
+    const booksReadInYear = booksWithReviews.filter(book => {
+      const reviewDates = book.reviews?.map(r => r.date_read) || [];
+      return reviewDates.some(date => date.startsWith(String(filterYear)));
     });
 
-    table.render();
+    if (booksReadInYear.length === 0) {
+      console.log(`No books read in ${filterYear}.`);
+      return;
+    }
+
+    console.log(`\nBooks Read in ${filterYear}:`);
+
+    const yearBooksTable = new Table()
+      .header(["Title", "Author", "Rating", "Date Read"])
+      .border(true)
+      .padding(1);
+
+    booksReadInYear.forEach(book => {
+      const review = book.reviews?.[0];
+      yearBooksTable.push([
+        book.title,
+        book.author,
+        review?.rating.toString() || "-",
+        review?.date_read || "-"
+      ]);
+    });
+
+    console.log(yearBooksTable.toString());
     return;
   }
 
-  // Group books by year
-  const yearBooks = filteredBooks.reduce((acc, book) => {
-    const year = book.pub_year as number;
-    acc[year] = acc[year] || [];
-    acc[year].push(book);
-    return acc;
-  }, {} as Record<number, Book[]>);
+  // Group books by year read based on review dates
+  const booksByYearRead: Record<string, number> = {};
 
-  // Create a count map for barChart
-  const yearCounts: Record<string, number> = {};
-  Object.entries(yearBooks).forEach(([year, books]) => {
-    yearCounts[year] = books.length;
+  booksWithReviews.forEach(book => {
+    book.reviews?.forEach(review => {
+      if (review.date_read) {
+        const year = review.date_read.substring(0, 4);
+        booksByYearRead[year] = (booksByYearRead[year] || 0) + 1;
+      }
+    });
   });
 
-  console.log("\nBooks by Year:");
-  console.log(barChart(yearCounts, {
-    sort: "desc",
-    maxBarWidth: 30
-  }));
+  // Sort years
+  const sortedYears = Object.keys(booksByYearRead).sort();
+
+  // Display in the style of the original Libro
+  console.log("\n                         Books Read by Year\n");
+  console.log("  Year   Count   Bar");
+  console.log(" ───────────────────────────────────────────────────────────────────");
+
+  // Find max for scaling
+  const maxBooks = Math.max(...Object.values(booksByYearRead));
+  const barScale = 50 / maxBooks; // Scale to max 50 characters
+
+  sortedYears.forEach(year => {
+    const count = booksByYearRead[year];
+    const barLength = Math.max(1, Math.round(count * barScale));
+    const bar = "▄".repeat(barLength);
+
+    // Format to match original Libro
+    console.log(`  ${year}   ${String(count).padEnd(6)}${bar}`);
+  });
+
+  console.log("");
 }

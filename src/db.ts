@@ -108,14 +108,22 @@ export class Database {
       : `SELECT id, title, author, pages, pub_year, genre FROM books ORDER BY title;`;
     const params = filter?.year ? [filter.year] : [];
     const rows = this.#db.query<[number, string, string, number | null, number | null, string | null]>(query, params);
-    return rows.map(([id, title, author, pages, pub_year, genre]) => ({
-      id,
-      title,
-      author,
-      pages,
-      pub_year,
-      genre,
-    }));
+
+    // 모든 책에 리뷰 정보를 추가
+    const books = rows.map(([id, title, author, pages, pub_year, genre]) => {
+      const reviews = this.getReviews(id);
+      return {
+        id,
+        title,
+        author,
+        pages,
+        pub_year,
+        genre,
+        reviews
+      };
+    });
+
+    return books;
   }
 
   /**
