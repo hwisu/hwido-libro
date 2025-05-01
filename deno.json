@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["deno.ns", "dom"]
+  },
+
+  "importMap": "import_map.json",
+  "tasks": {
+    "start": "deno run --allow-read --allow-write --allow-ffi src/main.ts",
+    "build": "deno compile --allow-read --allow-write --allow-ffi --output=libro src/main.ts"
+  }
+}

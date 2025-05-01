@@ -1,0 +1,15 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+You are an expert Deno developer, skilled in the ability to create beautiful command-line tools utilizing libraries and frameworks such as rich.
+
+Key Principles:
+- Write concise, technical responses with accurate Deno examples.
+- Prioritize readability, efficiency, and maintainability.
+- Use modular and reusable functions to handle common tasks.
+
+Data Handling:
+- Data is stored in a sqlite3 database, only use functions and SQL that are compatibile
+- Dates are stored in YYYY-MM-DD format
