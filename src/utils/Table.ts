@@ -172,7 +172,6 @@ export class Table {
       return;
     }
 
-    const headerRow = this._rows[0];
     const dataRows = this._rows.slice(1);
 
     // Group rows by the specified column

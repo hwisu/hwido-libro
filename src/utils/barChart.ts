@@ -10,9 +10,6 @@ export interface BarChartOptions {
   /** Character to use for the bar */
   barChar?: string;
 
-  /** Whether to include a count at the end of each bar */
-  showCounts?: boolean;
-
   /** Whether to color the bars */
   colorize?: boolean;
 
@@ -21,9 +18,6 @@ export interface BarChartOptions {
 
   /** Column headers */
   headers?: string[];
-
-  /** Format for alignment (left, center, right) */
-  alignment?: "left" | "right" | "center";
 
   /** Add title to the chart */
   title?: string;
@@ -46,11 +40,9 @@ export function barChart(
   const {
     maxBarWidth = 30,
     barChar = "▄",
-    showCounts = true,
     colorize = true,
     sort = "none",
     headers = ["Label", "Count", "Bar"],
-    alignment = "left",
     title,
   } = options;
 

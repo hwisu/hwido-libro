@@ -117,14 +117,14 @@ export async function handleAddCommand(db: Database): Promise<void> {
     // 3. DB에 저장
     if (review) {
       // 책과 리뷰 함께 저장
-      const { bookId, reviewId } = await addBookWithReview(db)({ book, review });
+      const { bookId, reviewId } = addBookWithReview(db)({ book, review });
       console.log(colors.green(`Book added with ID: ${bookId}`));
       if (reviewId) {
         console.log(colors.green(`Review added with ID: ${reviewId}`));
       }
     } else {
       // 책만 저장
-      const bookId = await addBook(db)(book);
+      const bookId = addBook(db)(book);
       console.log(colors.green(`Book added with ID: ${bookId}`));
     }
   } catch (error) {

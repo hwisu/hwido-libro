@@ -22,7 +22,7 @@ export interface Review {
 }
 
 // 책 추가 함수
-export const addBook = (db: Database) => async (book: Book): Promise<number> => {
+export const addBook = (db: Database) => (book: Book): number => {
   try {
     const id = db.addBook(book);
     return id;
@@ -32,7 +32,7 @@ export const addBook = (db: Database) => async (book: Book): Promise<number> => 
 };
 
 // 리뷰 추가 함수
-export const addReview = (db: Database) => async (review: Review): Promise<number> => {
+export const addReview = (db: Database) => (review: Review): number => {
   try {
     const id = db.addReview(review);
     return id;
@@ -42,7 +42,7 @@ export const addReview = (db: Database) => async (review: Review): Promise<numbe
 };
 
 // 트랜잭션으로 책과 리뷰 한 번에 추가
-export const addBookWithReview = (db: Database) => async ({ book, review }: { book: Book; review?: Omit<Review, 'book_id'> }): Promise<{ bookId: number; reviewId?: number }> => {
+export const addBookWithReview = (db: Database) => ({ book, review }: { book: Book; review?: Omit<Review, 'book_id'> }): { bookId: number; reviewId?: number } => {
   try {
     // 책 추가
     const bookId = db.addBook(book);

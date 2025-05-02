@@ -57,10 +57,10 @@ export async function handleImportMarkdownCommand(
         }
 
         // 책 및 리뷰 추가
-        const bookId = await addOrUpdateBook(db, reviewData);
+        const bookId = addOrUpdateBook(db, reviewData);
 
         if (reviewData.rating && reviewData.date_read) {
-          await addOrUpdateReview(db, bookId, reviewData);
+          addOrUpdateReview(db, bookId, reviewData);
         }
 
         console.log(colors.green(`성공: ${file} - ${reviewData.title} 임포트됨`));
@@ -85,7 +85,7 @@ export async function handleImportMarkdownCommand(
 /**
  * 책 정보를 데이터베이스에 추가하거나 업데이트합니다
  */
-async function addOrUpdateBook(db: Database, data: BookReview): Promise<number> {
+function addOrUpdateBook(db: Database, data: BookReview): number {
   // 이미 책이 있는지 확인 (제목과 작가로 검색)
   // 현재 getBooks()는 id와 year만 필터로 지원하므로 모든 책을 가져와서 필터링
   const allBooks = db.getBooks();
@@ -119,7 +119,7 @@ async function addOrUpdateBook(db: Database, data: BookReview): Promise<number> 
 /**
  * 리뷰 정보를 데이터베이스에 추가하거나 업데이트합니다
  */
-async function addOrUpdateReview(db: Database, bookId: number, data: BookReview): Promise<void> {
+function addOrUpdateReview(db: Database, bookId: number, data: BookReview): void {
   // 리뷰 가져오기
   const existingReviews = db.getReviews(bookId);
 
