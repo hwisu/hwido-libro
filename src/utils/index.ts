@@ -1,27 +1,21 @@
 // Export all utilities for convenient imports
 export { colors } from "./colors.ts";
 export { Table } from "./Table.ts";
-export { barChart, renderBarChart, type BarChartOptions } from "./barChart.ts";
+export { barChart, type BarChartOptions, renderBarChart } from "./barChart.ts";
 export {
-  parseMarkdownReview,
+  type BookReview,
   bookReviewToMarkdown,
   getBookIdFromPath,
+  parseMarkdownReview,
   slugify,
-  type BookReview
 } from "./markdown.ts";
 export {
   ensureDir,
   fileExists,
   listFiles,
   readTextFile,
+  removeFile,
   writeTextFile,
-  removeFile
 } from "./fs.ts";
-export {
-  editWithVim,
-  editWithSystemEditor
-} from "./editor.ts";
-export {
-  getHwidoBanner,
-  getSimpleDivider
-} from "./banner.ts";
+export { editWithSystemEditor, editWithVim } from "./editor.ts";
+export { getHwidoBanner, getSimpleDivider } from "./banner.ts";

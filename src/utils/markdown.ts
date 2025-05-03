@@ -54,15 +54,21 @@ export function parseMarkdownReview(markdown: string): BookReview {
     pubYear: markdown.match(/출판년도:\s*(\d+)$/m),
     pages: markdown.match(/페이지:\s*(\d+)$/m),
     dateRead: markdown.match(/읽은 날짜:\s*(.+)$/m),
-    rating: markdown.match(/평점:\s*(\d+(\.\d+)?)$/m)
+    rating: markdown.match(/평점:\s*(\d+(\.\d+)?)$/m),
   };
 
   if (metadataMatches.author) result.author = metadataMatches.author[1].trim();
   if (metadataMatches.genre) result.genre = metadataMatches.genre[1].trim();
-  if (metadataMatches.pubYear) result.pub_year = parseInt(metadataMatches.pubYear[1]);
+  if (metadataMatches.pubYear) {
+    result.pub_year = parseInt(metadataMatches.pubYear[1]);
+  }
   if (metadataMatches.pages) result.pages = parseInt(metadataMatches.pages[1]);
-  if (metadataMatches.dateRead) result.date_read = metadataMatches.dateRead[1].trim();
-  if (metadataMatches.rating) result.rating = parseFloat(metadataMatches.rating[1]);
+  if (metadataMatches.dateRead) {
+    result.date_read = metadataMatches.dateRead[1].trim();
+  }
+  if (metadataMatches.rating) {
+    result.rating = parseFloat(metadataMatches.rating[1]);
+  }
 
   // 리뷰 추출 (## 리뷰 이후의 모든 텍스트)
   const reviewMatch = markdown.match(/##\s+리뷰\s*\n\s*(.+(?:\n.+)*)/);
@@ -97,7 +103,7 @@ export function bookReviewToMarkdown(review: BookReview): string {
   if (review.rating) metadata.push(`평점: ${review.rating}`);
 
   if (metadata.length > 0) {
-    sections.push(metadata.join('\n'));
+    sections.push(metadata.join("\n"));
   }
 
   // 리뷰 섹션
@@ -105,7 +111,7 @@ export function bookReviewToMarkdown(review: BookReview): string {
     sections.push(`## 리뷰\n\n${review.review}`);
   }
 
-  return sections.join('\n\n') + '\n';
+  return sections.join("\n\n") + "\n";
 }
 
 /**
@@ -129,6 +135,6 @@ export function slugify(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^\w\s-]/g, "") // 영숫자, 언더스코어, 하이픈 및 공백만 유지
-    .replace(/\s+/g, "-")     // 공백을 하이픈으로 변환
-    .replace(/-+/g, "-");     // 연속된 하이픈 단일화
+    .replace(/\s+/g, "-") // 공백을 하이픈으로 변환
+    .replace(/-+/g, "-"); // 연속된 하이픈 단일화
 }

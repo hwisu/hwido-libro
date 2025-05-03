@@ -118,7 +118,8 @@ export class Table {
         }
 
         if (groupName !== "") {
-          output += this.formatRow([groupName, "", "", "", ""], -1, true) + "\n";
+          output += this.formatRow([groupName, "", "", "", ""], -1, true) +
+            "\n";
         }
 
         // Add header for each group if needed
@@ -204,7 +205,7 @@ export class Table {
       if (!this.columnWidths[index] || cellWidth > this.columnWidths[index]) {
         this.columnWidths[index] = Math.min(
           cellWidth,
-          this.options.maxWidth || 40
+          this.options.maxWidth || 40,
         );
       }
     });
@@ -223,14 +224,21 @@ export class Table {
   /**
    * Format a row with proper padding and colors
    */
-  private formatRow(cells: string[], rowIndex: number, isGroupHeader = false): string {
+  private formatRow(
+    cells: string[],
+    rowIndex: number,
+    isGroupHeader = false,
+  ): string {
     const isHeader = rowIndex === 0 && this.options.header;
-    const isZebraRow = this.options.zebra && rowIndex % 2 === 1 && !isHeader && !isGroupHeader;
+    const isZebraRow = this.options.zebra && rowIndex % 2 === 1 && !isHeader &&
+      !isGroupHeader;
 
     const formattedCells = cells.map((cell, columnIndex) => {
       // For group headers, only format the first cell
       if (isGroupHeader && columnIndex > 0) {
-        return "".padEnd(this.columnWidths[columnIndex] + (this.options.padding || 1) * 2);
+        return "".padEnd(
+          this.columnWidths[columnIndex] + (this.options.padding || 1) * 2,
+        );
       }
 
       // Truncate and pad the cell content
@@ -245,7 +253,7 @@ export class Table {
       // Pad to match column width
       const padding = " ".repeat(this.options.padding || 1);
       const paddedCell = `${padding}${cellContent}${padding}`.padEnd(
-        width + (this.options.padding || 1) * 2
+        width + (this.options.padding || 1) * 2,
       );
 
       // Apply formatting based on row type
@@ -270,7 +278,9 @@ export class Table {
    */
   private makeBorder(position: "top" | "bottom" | "header" | "middle"): string {
     const parts = this.columnWidths.map((width) =>
-      this.getBorderChar("horizontal").repeat(width + (this.options.padding || 1) * 2)
+      this.getBorderChar("horizontal").repeat(
+        width + (this.options.padding || 1) * 2,
+      )
     );
 
     // Get the right border characters based on position
@@ -321,7 +331,9 @@ export class Table {
       bottomRight: "+",
     };
 
-    const chars = this.options.borderStyle === "unicode" ? unicodeChars : asciiChars;
+    const chars = this.options.borderStyle === "unicode"
+      ? unicodeChars
+      : asciiChars;
     return chars[position] || "";
   }
 
@@ -330,7 +342,8 @@ export class Table {
    */
   private getCellWidth(str: string): number {
     // CJK 문자 및 전각 문자(full-width)를 감지하는 정규식
-    const wideCharRegex = /[\u1100-\u11FF\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u3130-\u318F\u3400-\u4DBF\u4E00-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF]/g;
+    const wideCharRegex =
+      /[\u1100-\u11FF\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u3130-\u318F\u3400-\u4DBF\u4E00-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF]/g;
 
     // 전각 문자를 두 칸으로 계산
     const wideCharCount = (str.match(wideCharRegex) || []).length;

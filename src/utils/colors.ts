@@ -1,5 +1,5 @@
 // Import and re-export color functions from standard library
-import * as stdColors from "https://deno.land/std@0.193.0/fmt/colors.ts";
+import * as stdColors from "@std/fmt/colors";
 
 // Create a colors object with all the color functions
 export const colors = {

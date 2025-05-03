@@ -1,8 +1,14 @@
 import { Database } from "../db.ts";
 import { colors } from "../utils/index.ts";
-import { Input, Confirm, Select } from "cliffy/prompt/mod.ts";
+import { Confirm, Input, Select } from "@cliffy/prompt";
 import { addBook, addBookWithReview } from "../lib/db-operations.ts";
-import { createError, errorHandler, validateNumber, validatePattern, validateRequired } from "../utils/errors.ts";
+import {
+  createError,
+  errorHandler,
+  validateNumber,
+  validatePattern,
+  validateRequired,
+} from "../utils/errors.ts";
 import { toInt } from "../utils/fp.ts";
 
 /**
@@ -20,16 +26,28 @@ const promptBook = async () => {
     validateRequired(author, "Author");
 
     // 선택 입력
-    const pagesStr = await Input.prompt({ message: "Pages (optional)", default: "" });
+    const pagesStr = await Input.prompt({
+      message: "Pages (optional)",
+      default: "",
+    });
     const pages = toInt(pagesStr);
     if (pagesStr && pages === undefined) {
-      throw createError("Pages must be a valid number", "VALIDATION", { field: "pages" });
+      throw createError("Pages must be a valid number", "VALIDATION", {
+        field: "pages",
+      });
     }
 
-    const yearStr = await Input.prompt({ message: "Publication year (optional)", default: "" });
+    const yearStr = await Input.prompt({
+      message: "Publication year (optional)",
+      default: "",
+    });
     const pub_year = toInt(yearStr);
     if (yearStr && pub_year === undefined) {
-      throw createError("Publication year must be a valid number", "VALIDATION", { field: "year" });
+      throw createError(
+        "Publication year must be a valid number",
+        "VALIDATION",
+        { field: "year" },
+      );
     }
 
     const genre = await Select.prompt({
@@ -43,7 +61,7 @@ const promptBook = async () => {
         { name: "Biography", value: "Biography" },
         { name: "Other", value: "" },
       ],
-      default: "Fiction"
+      default: "Fiction",
     });
 
     return {
@@ -51,7 +69,7 @@ const promptBook = async () => {
       author,
       pages,
       pub_year,
-      genre: genre || undefined
+      genre: genre || undefined,
     };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
@@ -65,7 +83,10 @@ const promptBook = async () => {
 const promptReview = async () => {
   try {
     // 리뷰 추가 여부 확인
-    const shouldAddReview = await Confirm.prompt({ message: "Add a review?", default: false });
+    const shouldAddReview = await Confirm.prompt({
+      message: "Add a review?",
+      default: false,
+    });
 
     if (!shouldAddReview) {
       return null;
@@ -76,7 +97,12 @@ const promptReview = async () => {
       message: "Date read (YYYY-MM-DD)",
       default: new Date().toISOString().split("T")[0],
     });
-    validatePattern(dateRead, /^\d{4}-\d{2}-\d{2}$/, "Date", "Invalid date format. Please use YYYY-MM-DD");
+    validatePattern(
+      dateRead,
+      /^\d{4}-\d{2}-\d{2}$/,
+      "Date",
+      "Invalid date format. Please use YYYY-MM-DD",
+    );
 
     // 평점 입력
     const ratingStr = await Input.prompt({
@@ -95,7 +121,7 @@ const promptReview = async () => {
     return {
       date_read: dateRead,
       rating: rating as number, // 이미 검증했으므로 안전
-      review: reviewText
+      review: reviewText,
     };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {

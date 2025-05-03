@@ -1,11 +1,14 @@
-import { Input, Confirm } from "cliffy/prompt/mod.ts";
+import { Confirm, Input } from "@cliffy/prompt";
 import { Database } from "../db.ts";
 import { colors } from "../utils/colors.ts";
 
 /**
  * Handles the 'review' command to add a review to an existing book
  */
-export async function handleReviewCommand(db: Database, bookId: number): Promise<void> {
+export async function handleReviewCommand(
+  db: Database,
+  bookId: number,
+): Promise<void> {
   // First check if the book exists
   const books = db.getBooks({ id: bookId });
 
@@ -15,14 +18,18 @@ export async function handleReviewCommand(db: Database, bookId: number): Promise
   }
 
   const book = books[0];
-  console.log(colors.green(`Adding review for: ${book.title} by ${book.author}`));
+  console.log(
+    colors.green(`Adding review for: ${book.title} by ${book.author}`),
+  );
 
   // If book already has reviews, show them first
   if (book.reviews && book.reviews.length > 0) {
     console.log(colors.yellow("\nExisting reviews:"));
     for (const review of book.reviews) {
       console.log(`Date: ${review.date_read}`);
-      console.log(`Rating: ${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`);
+      console.log(
+        `Rating: ${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`,
+      );
       console.log(`${review.review}\n`);
     }
 

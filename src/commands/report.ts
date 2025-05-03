@@ -1,6 +1,6 @@
 import { Database } from "../db.ts";
 import { colors } from "../utils/index.ts";
-import { Table } from "cliffy/table/mod.ts";
+import { Table } from "@cliffy/table";
 import { barChart } from "../utils/index.ts";
 
 export interface ReportOptions {
@@ -31,7 +31,10 @@ interface Book {
 /**
  * Handles the 'report' command to generate statistics about the books
  */
-export function handleReportCommand(db: Database, options: ReportOptions): void {
+export function handleReportCommand(
+  db: Database,
+  options: ReportOptions,
+): void {
   const { author, year, years } = options;
 
   // Get all books
@@ -42,12 +45,14 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
     return;
   }
 
-  console.log(colors.bold(colors.green(`Library Statistics (${books.length} books)`)));
+  console.log(
+    colors.bold(colors.green(`Library Statistics (${books.length} books)`)),
+  );
 
   if (author) {
-    authorReport(books, typeof author === 'string' ? author : undefined);
+    authorReport(books, typeof author === "string" ? author : undefined);
   } else if (year) {
-    yearReport(books, typeof year === 'number' ? year : undefined);
+    yearReport(books, typeof year === "number" ? year : undefined);
   } else if (years) {
     yearReport(books); // Show years chart without specific year filter
   } else {
@@ -55,17 +60,24 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
     console.log(`\nTotal books: ${books.length}`);
 
     // Count books with reviews
-    const booksWithReviews = books.filter(book => book.reviews && book.reviews.length > 0);
+    const booksWithReviews = books.filter((book) =>
+      book.reviews && book.reviews.length > 0
+    );
     console.log(`Books with reviews: ${booksWithReviews.length}`);
 
     // Average rating
-    const allReviews = books.flatMap(book => book.reviews || []);
-    const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
-    const avgRating = allReviews.length ? (totalRating / allReviews.length).toFixed(1) : "N/A";
+    const allReviews = books.flatMap((book) => book.reviews || []);
+    const totalRating = allReviews.reduce(
+      (sum, review) => sum + review.rating,
+      0,
+    );
+    const avgRating = allReviews.length
+      ? (totalRating / allReviews.length).toFixed(1)
+      : "N/A";
     console.log(`Average rating: ${avgRating}`);
 
     // Authors count
-    const uniqueAuthors = new Set(books.map(book => book.author));
+    const uniqueAuthors = new Set(books.map((book) => book.author));
     console.log(`Unique authors: ${uniqueAuthors.size}`);
 
     // Genre breakdown if available
@@ -82,7 +94,7 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
       // Use barChart to display genre distribution
       console.log(barChart(genreCounts, {
         maxBarWidth: 20,
-        sort: "desc"
+        sort: "desc",
       }));
     }
   }
@@ -94,7 +106,9 @@ export function handleReportCommand(db: Database, options: ReportOptions): void 
 function authorReport(books: Book[], filterAuthor?: string): void {
   // If filterAuthor is provided, only show books by that author
   const filteredBooks = filterAuthor
-    ? books.filter(book => book.author.toLowerCase().includes(filterAuthor.toLowerCase()))
+    ? books.filter((book) =>
+      book.author.toLowerCase().includes(filterAuthor.toLowerCase())
+    )
     : books;
 
   if (filterAuthor && filteredBooks.length === 0) {
@@ -110,11 +124,11 @@ function authorReport(books: Book[], filterAuthor?: string): void {
       .border(true)
       .padding(1);
 
-    filteredBooks.forEach(book => {
+    filteredBooks.forEach((book) => {
       authorBooksTable.push([
         book.title,
         book.pub_year?.toString() || "Unknown",
-        book.genre || "Unknown"
+        book.genre || "Unknown",
       ]);
     });
 
@@ -155,7 +169,9 @@ function authorReport(books: Book[], filterAuthor?: string): void {
  */
 function yearReport(books: Book[], filterYear?: number): void {
   // Get all books with reviews to determine read dates
-  const booksWithReviews = books.filter(book => book.reviews && book.reviews.length > 0);
+  const booksWithReviews = books.filter((book) =>
+    book.reviews && book.reviews.length > 0
+  );
 
   if (booksWithReviews.length === 0) {
     console.log("No books with review data to show read dates.");
@@ -164,9 +180,9 @@ function yearReport(books: Book[], filterYear?: number): void {
 
   // If a specific year is requested, show details for that year
   if (filterYear) {
-    const booksReadInYear = booksWithReviews.filter(book => {
-      const reviewDates = book.reviews?.map(r => r.date_read) || [];
-      return reviewDates.some(date => date.startsWith(String(filterYear)));
+    const booksReadInYear = booksWithReviews.filter((book) => {
+      const reviewDates = book.reviews?.map((r) => r.date_read) || [];
+      return reviewDates.some((date) => date.startsWith(String(filterYear)));
     });
 
     if (booksReadInYear.length === 0) {
@@ -181,13 +197,13 @@ function yearReport(books: Book[], filterYear?: number): void {
       .border(true)
       .padding(1);
 
-    booksReadInYear.forEach(book => {
+    booksReadInYear.forEach((book) => {
       const review = book.reviews?.[0];
       yearBooksTable.push([
         book.title,
         book.author,
         review?.rating.toString() || "-",
-        review?.date_read || "-"
+        review?.date_read || "-",
       ]);
     });
 
@@ -198,8 +214,8 @@ function yearReport(books: Book[], filterYear?: number): void {
   // Group books by year read based on review dates
   const booksByYearRead: Record<string, number> = {};
 
-  booksWithReviews.forEach(book => {
-    book.reviews?.forEach(review => {
+  booksWithReviews.forEach((book) => {
+    book.reviews?.forEach((review) => {
       if (review.date_read) {
         const year = review.date_read.substring(0, 4);
         booksByYearRead[year] = (booksByYearRead[year] || 0) + 1;
@@ -213,13 +229,15 @@ function yearReport(books: Book[], filterYear?: number): void {
   // Display in the style of the original Libro
   console.log("\n                         Books Read by Year\n");
   console.log("  Year   Count   Bar");
-  console.log(" ───────────────────────────────────────────────────────────────────");
+  console.log(
+    " ───────────────────────────────────────────────────────────────────",
+  );
 
   // Find max for scaling
   const maxBooks = Math.max(...Object.values(booksByYearRead));
   const barScale = 50 / maxBooks; // Scale to max 50 characters
 
-  sortedYears.forEach(year => {
+  sortedYears.forEach((year) => {
     const count = booksByYearRead[year];
     const barLength = Math.max(1, Math.round(count * barScale));
     const bar = "▄".repeat(barLength);

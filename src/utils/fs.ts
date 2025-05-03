@@ -35,7 +35,10 @@ export async function fileExists(path: string): Promise<boolean> {
 /**
  * 디렉토리의 모든 파일 목록을 반환합니다
  */
-export async function listFiles(dir: string, extension = ".md"): Promise<string[]> {
+export async function listFiles(
+  dir: string,
+  extension = ".md",
+): Promise<string[]> {
   const files: string[] = [];
 
   try {
@@ -63,7 +66,10 @@ export async function readTextFile(path: string): Promise<string> {
 /**
  * 파일에 텍스트를 씁니다
  */
-export async function writeTextFile(path: string, content: string): Promise<void> {
+export async function writeTextFile(
+  path: string,
+  content: string,
+): Promise<void> {
   await Deno.writeTextFile(path, content);
 }
 

@@ -9,7 +9,9 @@
  * @param text 편집할 초기 텍스트
  * @returns 편집 후 텍스트 또는 오류 발생 시 null
  */
-export async function editWithSystemEditor(text: string): Promise<string | null> {
+export async function editWithSystemEditor(
+  text: string,
+): Promise<string | null> {
   try {
     // 환경 변수에서 기본 에디터 확인
     const editor = Deno.env.get("EDITOR") || "vim";
@@ -46,7 +48,9 @@ export async function editWithSystemEditor(text: string): Promise<string | null>
       await Deno.remove(tempFilePath);
       await Deno.remove(tempDir);
     } catch (cleanupError) {
-      console.warn(`임시 파일 정리 중 오류 발생: ${(cleanupError as Error).message}`);
+      console.warn(
+        `임시 파일 정리 중 오류 발생: ${(cleanupError as Error).message}`,
+      );
       // 파일 정리 실패는 편집된 텍스트 반환에 영향을 주지 않음
     }
 

@@ -1,10 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
     "lib": ["deno.ns", "dom"]
   },
 
-  "importMap": "import_map.json",
+  "imports": {
+    "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@cliffy/flags": "jsr:@cliffy/flags@^1.0.0-rc.7",
+    "@cliffy/prompt": "jsr:@cliffy/prompt@^1.0.0-rc.7",
+    "@cliffy/table": "jsr:@cliffy/table@^1.0.0-rc.7",
+    "@std/fmt": "jsr:@std/fmt@^1.0.7",
+    "sqlite": "https://deno.land/x/sqlite@v3.9.1/mod.ts"
+  },
   "tasks": {
     "start": "deno run --allow-read --allow-write --allow-ffi --allow-run src/main.ts",
     "build": "mkdir -p dist && deno compile --no-check --allow-read --allow-write --allow-ffi --allow-run --output=dist/libro src/main.ts",
@@ -13,5 +19,6 @@
     "build:linux": "mkdir -p dist && deno compile --no-check --target=x86_64-unknown-linux-gnu --allow-read --allow-write --allow-ffi --allow-run --output=dist/libro-linux src/main.ts",
     "build:all": "deno task build && deno task build:mac && deno task build:windows && deno task build:linux",
     "clean": "rm -rf dist"
-  }
+  },
+  "unstable": ["jsr"]
 }

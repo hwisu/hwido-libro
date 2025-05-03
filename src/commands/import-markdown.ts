@@ -1,13 +1,13 @@
 import { Database } from "../db.ts";
 import {
+  BookReview,
+  bookReviewToMarkdown,
   colors,
-  parseMarkdownReview,
+  ensureDir,
   listFiles,
+  parseMarkdownReview,
   readTextFile,
   writeTextFile,
-  bookReviewToMarkdown,
-  ensureDir,
-  BookReview
 } from "../utils/index.ts";
 
 export interface ImportMarkdownOptions {
@@ -20,23 +20,29 @@ export interface ImportMarkdownOptions {
  */
 export async function handleImportMarkdownCommand(
   db: Database,
-  options: ImportMarkdownOptions
+  options: ImportMarkdownOptions,
 ): Promise<void> {
   const path = options.path || "data/assets";
   const sync = options.sync || false;
 
-  console.log(colors.cyan(`마크다운 파일을 ${path} 디렉토리에서 임포트합니다...`));
+  console.log(
+    colors.cyan(`마크다운 파일을 ${path} 디렉토리에서 임포트합니다...`),
+  );
 
   try {
     // 디렉토리에서 모든 마크다운 파일 목록 가져오기
     const files = await listFiles(path);
 
     if (files.length === 0) {
-      console.log(colors.yellow(`${path} 디렉토리에 마크다운 파일이 없습니다.`));
+      console.log(
+        colors.yellow(`${path} 디렉토리에 마크다운 파일이 없습니다.`),
+      );
       return;
     }
 
-    console.log(colors.green(`${files.length}개의 마크다운 파일을 찾았습니다.`));
+    console.log(
+      colors.green(`${files.length}개의 마크다운 파일을 찾았습니다.`),
+    );
 
     // 각 파일을 처리
     let success = 0;
@@ -51,7 +57,9 @@ export async function handleImportMarkdownCommand(
         const reviewData = parseMarkdownReview(content);
 
         if (!reviewData.title || !reviewData.author) {
-          console.log(colors.red(`오류: ${file} - 필수 필드 누락 (제목 또는 작가)`));
+          console.log(
+            colors.red(`오류: ${file} - 필수 필드 누락 (제목 또는 작가)`),
+          );
           failed++;
           continue;
         }
@@ -63,7 +71,9 @@ export async function handleImportMarkdownCommand(
           addOrUpdateReview(db, bookId, reviewData);
         }
 
-        console.log(colors.green(`성공: ${file} - ${reviewData.title} 임포트됨`));
+        console.log(
+          colors.green(`성공: ${file} - ${reviewData.title} 임포트됨`),
+        );
         success++;
       } catch (error) {
         console.log(colors.red(`오류: ${file} - ${(error as Error).message}`));
@@ -71,7 +81,9 @@ export async function handleImportMarkdownCommand(
       }
     }
 
-    console.log(colors.cyan(`\n임포트 완료: ${success}개 성공, ${failed}개 실패\n`));
+    console.log(
+      colors.cyan(`\n임포트 완료: ${success}개 성공, ${failed}개 실패\n`),
+    );
 
     // 동기화 모드인 경우 데이터베이스의 책을 마크다운 파일로 내보내기
     if (sync) {
@@ -89,7 +101,7 @@ function addOrUpdateBook(db: Database, data: BookReview): number {
   // 이미 책이 있는지 확인 (제목과 작가로 검색)
   // 현재 getBooks()는 id와 year만 필터로 지원하므로 모든 책을 가져와서 필터링
   const allBooks = db.getBooks();
-  const existingBooks = allBooks.filter(book =>
+  const existingBooks = allBooks.filter((book) =>
     book.title === data.title && book.author === data.author
   );
 
@@ -100,7 +112,7 @@ function addOrUpdateBook(db: Database, data: BookReview): number {
     db.updateBook(bookId, {
       genre: data.genre,
       pub_year: data.pub_year,
-      pages: data.pages
+      pages: data.pages,
     });
 
     return bookId;
@@ -111,7 +123,7 @@ function addOrUpdateBook(db: Database, data: BookReview): number {
       author: data.author!,
       genre: data.genre,
       pub_year: data.pub_year,
-      pages: data.pages
+      pages: data.pages,
     });
   }
 }
@@ -119,7 +131,11 @@ function addOrUpdateBook(db: Database, data: BookReview): number {
 /**
  * 리뷰 정보를 데이터베이스에 추가하거나 업데이트합니다
  */
-function addOrUpdateReview(db: Database, bookId: number, data: BookReview): void {
+function addOrUpdateReview(
+  db: Database,
+  bookId: number,
+  data: BookReview,
+): void {
   // 리뷰 가져오기
   const existingReviews = db.getReviews(bookId);
 
@@ -127,7 +143,7 @@ function addOrUpdateReview(db: Database, bookId: number, data: BookReview): void
     book_id: bookId,
     rating: data.rating!,
     date_read: data.date_read!,
-    review: data.review || ""
+    review: data.review || "",
   };
 
   if (existingReviews.length > 0) {
@@ -143,14 +159,19 @@ function addOrUpdateReview(db: Database, bookId: number, data: BookReview): void
 /**
  * 데이터베이스의 책 정보를 마크다운 파일로 동기화합니다
  */
-async function syncDatabaseToMarkdown(db: Database, path: string): Promise<void> {
+async function syncDatabaseToMarkdown(
+  db: Database,
+  path: string,
+): Promise<void> {
   console.log(colors.cyan("\nDB → 마크다운 동기화를 시작합니다..."));
 
   // 디렉토리 확인 및 생성
   try {
     await ensureDir(path);
   } catch (error) {
-    console.error(colors.red(`디렉토리 생성 오류: ${(error as Error).message}`));
+    console.error(
+      colors.red(`디렉토리 생성 오류: ${(error as Error).message}`),
+    );
     return;
   }
 
@@ -189,7 +210,7 @@ async function syncDatabaseToMarkdown(db: Database, path: string): Promise<void>
           pages: book.pages,
           date_read: review.date_read,
           rating: review.rating,
-          review: review.review
+          review: review.review,
         };
 
         // 마크다운으로 변환
@@ -205,10 +226,14 @@ async function syncDatabaseToMarkdown(db: Database, path: string): Promise<void>
         console.log(colors.green(`저장 완료: ${filePath}`));
         success++;
       } catch (error) {
-        console.error(colors.red(`오류: ${book.title} - ${(error as Error).message}`));
+        console.error(
+          colors.red(`오류: ${book.title} - ${(error as Error).message}`),
+        );
       }
     }
   }
 
-  console.log(colors.cyan(`\n동기화 완료: ${success}개 저장, ${skipped}개 리뷰 없음`));
+  console.log(
+    colors.cyan(`\n동기화 완료: ${success}개 저장, ${skipped}개 리뷰 없음`),
+  );
 }

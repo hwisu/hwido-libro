@@ -35,7 +35,7 @@ export interface BarChartOptions {
  */
 export function barChart(
   data: Record<string, number>,
-  options: BarChartOptions = {}
+  options: BarChartOptions = {},
 ): string {
   const {
     maxBarWidth = 30,
@@ -76,7 +76,9 @@ export function barChart(
   // Add title if provided
   if (title) {
     const totalWidth = labelWidth + countWidth + maxBarWidth + 10;
-    const paddedTitle = title.padStart((totalWidth + title.length) / 2).padEnd(totalWidth);
+    const paddedTitle = title.padStart((totalWidth + title.length) / 2).padEnd(
+      totalWidth,
+    );
     output += "\n" + colors.bold(colors.cyan(paddedTitle)) + "\n\n";
   }
 
@@ -87,11 +89,12 @@ export function barChart(
     const barHeader = headers[2];
 
     output += "  " + colors.bold(labelHeader) + "   " +
-              colors.bold(countHeader) + "   " +
-              colors.bold(barHeader) + "\n";
+      colors.bold(countHeader) + "   " +
+      colors.bold(barHeader) + "\n";
 
     // Add separator line
-    output += " " + "─".repeat(labelWidth + countWidth + maxBarWidth + 7) + "\n";
+    output += " " + "─".repeat(labelWidth + countWidth + maxBarWidth + 7) +
+      "\n";
   }
 
   // Build the chart rows
@@ -120,7 +123,7 @@ export function barChart(
  */
 export function renderBarChart(
   data: Record<string, number>,
-  options: BarChartOptions = {}
+  options: BarChartOptions = {},
 ): void {
   console.log(barChart(data, options));
 }

@@ -1,6 +1,5 @@
 import { Database } from "../db.ts";
 import { createError } from "../utils/errors.ts";
-import { tap } from "../utils/fp.ts";
 
 // 모델 타입 정의
 export interface Book {
@@ -27,7 +26,12 @@ export const addBook = (db: Database) => (book: Book): number => {
     const id = db.addBook(book);
     return id;
   } catch (error) {
-    throw createError(`Failed to add book: ${error instanceof Error ? error.message : String(error)}`, 'DATABASE');
+    throw createError(
+      `Failed to add book: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      "DATABASE",
+    );
   }
 };
 
@@ -37,12 +41,20 @@ export const addReview = (db: Database) => (review: Review): number => {
     const id = db.addReview(review);
     return id;
   } catch (error) {
-    throw createError(`Failed to add review: ${error instanceof Error ? error.message : String(error)}`, 'DATABASE');
+    throw createError(
+      `Failed to add review: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      "DATABASE",
+    );
   }
 };
 
 // 트랜잭션으로 책과 리뷰 한 번에 추가
-export const addBookWithReview = (db: Database) => ({ book, review }: { book: Book; review?: Omit<Review, 'book_id'> }): { bookId: number; reviewId?: number } => {
+export const addBookWithReview = (db: Database) =>
+(
+  { book, review }: { book: Book; review?: Omit<Review, "book_id"> },
+): { bookId: number; reviewId?: number } => {
   try {
     // 책 추가
     const bookId = db.addBook(book);
@@ -52,30 +64,46 @@ export const addBookWithReview = (db: Database) => ({ book, review }: { book: Bo
     if (review) {
       reviewId = db.addReview({
         ...review,
-        book_id: bookId
+        book_id: bookId,
       });
     }
 
     return { bookId, reviewId };
   } catch (error) {
-    throw createError(`Transaction failed: ${error instanceof Error ? error.message : String(error)}`, 'DATABASE');
+    throw createError(
+      `Transaction failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      "DATABASE",
+    );
   }
 };
 
 // 책 조회 함수
-export const getBooks = (db: Database) => (filter?: { id?: number; year?: number }): Book[] => {
-  try {
-    return db.getBooks(filter);
-  } catch (error) {
-    throw createError(`Failed to get books: ${error instanceof Error ? error.message : String(error)}`, 'DATABASE');
-  }
-};
+export const getBooks =
+  (db: Database) => (filter?: { id?: number; year?: number }): Book[] => {
+    try {
+      return db.getBooks(filter);
+    } catch (error) {
+      throw createError(
+        `Failed to get books: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        "DATABASE",
+      );
+    }
+  };
 
 // 리뷰 가져오기
 export const getReviews = (db: Database) => (bookId: number): Review[] => {
   try {
     return db.getReviews(bookId);
   } catch (error) {
-    throw createError(`Failed to get reviews: ${error instanceof Error ? error.message : String(error)}`, 'DATABASE');
+    throw createError(
+      `Failed to get reviews: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      "DATABASE",
+    );
   }
 };

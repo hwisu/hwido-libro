@@ -83,7 +83,9 @@ export class Database {
    */
   getBooks(filter?: { id?: number; year?: number }): Array<any> {
     if (filter?.id) {
-      const row = this.#db.query<[number, string, string, number | null, number | null, string | null]>(
+      const row = this.#db.query<
+        [number, string, string, number | null, number | null, string | null]
+      >(
         `SELECT id, title, author, pages, pub_year, genre FROM books WHERE id = ?;`,
         [filter.id],
       )[0];
@@ -107,7 +109,9 @@ export class Database {
       ? `SELECT id, title, author, pages, pub_year, genre FROM books WHERE pub_year = ? ORDER BY title;`
       : `SELECT id, title, author, pages, pub_year, genre FROM books ORDER BY title;`;
     const params = filter?.year ? [filter.year] : [];
-    const rows = this.#db.query<[number, string, string, number | null, number | null, string | null]>(query, params);
+    const rows = this.#db.query<
+      [number, string, string, number | null, number | null, string | null]
+    >(query, params);
 
     // 모든 책에 리뷰 정보를 추가
     const books = rows.map(([id, title, author, pages, pub_year, genre]) => {
@@ -119,7 +123,7 @@ export class Database {
         pages,
         pub_year,
         genre,
-        reviews
+        reviews,
       };
     });
 

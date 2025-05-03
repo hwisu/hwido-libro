@@ -1,6 +1,6 @@
 import { Database } from "../db.ts";
 import { colors } from "../utils/index.ts";
-import { Table } from "cliffy/table/mod.ts";
+import { Table } from "@cliffy/table";
 
 export interface ShowOptions {
   id?: number;
@@ -57,7 +57,11 @@ export function handleShowCommand(db: Database, options: ShowOptions): void {
 
 // 단일 책의 상세 정보 표시
 const displayDetailedBook = (book: Book): void => {
-  console.log(colors.bold(colors.green(`${book.title} (${book.pub_year || "Unknown Year"})`)));
+  console.log(
+    colors.bold(
+      colors.green(`${book.title} (${book.pub_year || "Unknown Year"})`),
+    ),
+  );
   console.log(colors.italic(`by ${book.author}`));
 
   if (book.pages) {
@@ -72,7 +76,9 @@ const displayDetailedBook = (book: Book): void => {
     console.log("\nReviews:");
     book.reviews.forEach((review: Review) => {
       console.log(`Date: ${review.date_read}`);
-      console.log(`Rating: ${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`);
+      console.log(
+        `Rating: ${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`,
+      );
       console.log(`${review.review}\n`);
     });
   } else {
@@ -135,7 +141,7 @@ const createBooksTable = (title?: string) => (books: Book[]) => {
   }
 
   // 책 정보를 테이블에 추가
-  const rows = books.map(book => {
+  const rows = books.map((book) => {
     const review = book.reviews && book.reviews.length > 0
       ? book.reviews[book.reviews.length - 1]
       : null;
@@ -145,15 +151,17 @@ const createBooksTable = (title?: string) => (books: Book[]) => {
       book.title,
       book.author,
       review ? review.rating.toString() : "",
-      review ? new Date(review.date_read).toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric'
-      }) : ""
+      review
+        ? new Date(review.date_read).toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        })
+        : "",
     ] as RowType;
   });
 
-  rows.forEach(row => table.push(row));
+  rows.forEach((row) => table.push(row));
 
   return table;
 };
