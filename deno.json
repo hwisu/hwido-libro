@@ -21,8 +21,5 @@
     "build:linux": "mkdir -p dist && deno compile --no-check --target=x86_64-unknown-linux-gnu --allow-read --allow-write --allow-ffi --allow-run --output=dist/libro-linux src/main.ts",
     "build:all": "deno task build && deno task build:mac && deno task build:windows && deno task build:linux",
     "clean": "rm -rf dist"
-  },
-  "unstable": [
-    "jsr"
-  ]
+  }
 }

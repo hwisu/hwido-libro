@@ -27,7 +27,7 @@ if (
 // Create the main command
 const command = new Command()
   .name("libro")
-  .version("0.1.5")
+  .version("0.1.6")
   .description("A command-line book tracking tool with data stored in SQLite")
   // Original Libro commands
   .command("add", "Add a new book")
