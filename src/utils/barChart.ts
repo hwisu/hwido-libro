@@ -118,12 +118,3 @@ export function barChart(
   return output;
 }
 
-/**
- * Render a bar chart directly to the console
- */
-export function renderBarChart(
-  data: Record<string, number>,
-  options: BarChartOptions = {},
-): void {
-  console.log(barChart(data, options));
-}

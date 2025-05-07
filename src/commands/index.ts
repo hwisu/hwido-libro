@@ -7,3 +7,4 @@ export {
   handleImportMarkdownCommand,
   type ImportMarkdownOptions,
 } from "./import-markdown.ts";
+export { handleEditReviewCommand } from "./edit-review.ts";

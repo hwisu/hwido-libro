@@ -4,6 +4,7 @@ import { Command } from "@cliffy/command";
 import { Database } from "./db.ts";
 import {
   handleAddCommand,
+  handleEditReviewCommand,
   handleImportMarkdownCommand,
   handleReportCommand,
   handleReviewCommand,
@@ -26,7 +27,7 @@ if (
 // Create the main command
 const command = new Command()
   .name("libro")
-  .version("0.1.5")
+  .version("0.1.6")
   .description("A command-line book tracking tool with data stored in SQLite")
   // Original Libro commands
   .command("add", "Add a new book")
@@ -58,6 +59,10 @@ const command = new Command()
   .option("--sync", "Sync database to markdown files", { default: false })
   .action(async (options) => {
     await handleImportMarkdownCommand(db, options);
+  })
+  .command("edit-review <id:number>", "Edit a book review using system editor")
+  .action(async (_, id) => {
+    await handleEditReviewCommand(db, id);
   });
 
 // Parse and execute the command

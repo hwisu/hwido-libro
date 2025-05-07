@@ -114,27 +114,3 @@ export function bookReviewToMarkdown(review: BookReview): string {
   return sections.join("\n\n") + "\n";
 }
 
-/**
- * 파일 경로에서 책 ID를 추출합니다 (파일명이 ID.md 형식인 경우)
- *
- * @param path 파일 경로
- * @returns 추출된 책 ID 또는 null
- */
-export function getBookIdFromPath(path: string): number | null {
-  const match = path.match(/\/(\d+)\.md$/);
-  return match ? parseInt(match[1]) : null;
-}
-
-/**
- * 책 제목에서 파일명에 사용할 수 있는 슬러그를 생성합니다
- *
- * @param title 원본 책 제목
- * @returns URL 및 파일명에 적합한 슬러그 문자열
- */
-export function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "") // 영숫자, 언더스코어, 하이픈 및 공백만 유지
-    .replace(/\s+/g, "-") // 공백을 하이픈으로 변환
-    .replace(/-+/g, "-"); // 연속된 하이픈 단일화
-}
