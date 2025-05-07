@@ -4,6 +4,7 @@ import { Command } from "@cliffy/command";
 import { Database } from "./db.ts";
 import {
   handleAddCommand,
+  handleEditReviewCommand,
   handleImportMarkdownCommand,
   handleReportCommand,
   handleReviewCommand,
@@ -58,6 +59,10 @@ const command = new Command()
   .option("--sync", "Sync database to markdown files", { default: false })
   .action(async (options) => {
     await handleImportMarkdownCommand(db, options);
+  })
+  .command("edit-review <id:number>", "Edit a book review using system editor")
+  .action(async (_, id) => {
+    await handleEditReviewCommand(db, id);
   });
 
 // Parse and execute the command

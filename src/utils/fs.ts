@@ -17,20 +17,6 @@ export async function ensureDir(path: string): Promise<void> {
   }
 }
 
-/**
- * 파일이 존재하는지 확인합니다
- */
-export async function fileExists(path: string): Promise<boolean> {
-  try {
-    const stat = await Deno.stat(path);
-    return stat.isFile;
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return false;
-    }
-    throw error;
-  }
-}
 
 /**
  * 디렉토리의 모든 파일 목록을 반환합니다
@@ -73,17 +59,3 @@ export async function writeTextFile(
   await Deno.writeTextFile(path, content);
 }
 
-/**
- * 파일을 삭제합니다
- */
-export async function removeFile(path: string): Promise<boolean> {
-  try {
-    await Deno.remove(path);
-    return true;
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return false;
-    }
-    throw error;
-  }
-}
