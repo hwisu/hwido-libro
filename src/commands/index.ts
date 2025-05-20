@@ -3,8 +3,4 @@ export { handleAddCommand } from "./add.ts";
 export { handleShowCommand, type ShowOptions } from "./show.ts";
 export { handleReviewCommand } from "./review.ts";
 export { handleReportCommand, type ReportOptions } from "./report.ts";
-export {
-  handleImportMarkdownCommand,
-  type ImportMarkdownOptions,
-} from "./import-markdown.ts";
 export { handleEditReviewCommand } from "./edit-review.ts";

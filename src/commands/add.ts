@@ -22,8 +22,19 @@ const promptBook = async () => {
     const title = await Input.prompt({ message: "Title", minLength: 1 });
     validateRequired(title, "Title");
 
-    const author = await Input.prompt({ message: "Author", minLength: 1 });
+    // 여러 작가 입력 지원
+    const author = await Input.prompt({
+      message: "Author(s) (comma-separated)",
+      minLength: 1,
+    });
     validateRequired(author, "Author");
+
+    // 번역가 입력 추가
+    const translator = await Input.prompt({
+      // 여러 번역가 입력 지원
+      message: "Translator(s) (comma-separated, optional)",
+      default: "",
+    });
 
     // 선택 입력
     const pagesStr = await Input.prompt({
@@ -67,6 +78,7 @@ const promptBook = async () => {
     return {
       title,
       author,
+      translator,
       pages,
       pub_year,
       genre: genre || undefined,
@@ -135,7 +147,11 @@ const promptReview = async () => {
 export async function handleAddCommand(db: Database): Promise<void> {
   try {
     // 1. 책 정보 수집
-    const book = await promptBook();
+    const book = await promptBook(); // book now contains author/translator names string
+
+    // Parse authors and translators strings into arrays
+    const authors = book.author.split(',').map(name => name.trim()).filter(name => name.length > 0);
+    const translators = book.translator ? book.translator.split(',').map(name => name.trim()).filter(name => name.length > 0) : [];
 
     // 2. 리뷰 정보 수집
     const review = await promptReview();
@@ -143,14 +159,43 @@ export async function handleAddCommand(db: Database): Promise<void> {
     // 3. DB에 저장
     if (review) {
       // 책과 리뷰 함께 저장
-      const { bookId, reviewId } = addBookWithReview(db)({ book, review });
+      const { bookId, reviewId } = addBookWithReview(db)({
+        book: {
+          title: book.title,
+          authors: authors,
+          translators: translators,
+          pages: book.pages,
+          pub_year: book.pub_year,
+          genre: book.genre,
+        },
+        review: review,
+      });
       console.log(colors.green(`Book added with ID: ${bookId}`));
       if (reviewId) {
         console.log(colors.green(`Review added with ID: ${reviewId}`));
       }
     } else {
       // 책만 저장
-      const bookId = addBook(db)(book);
+      // Add book only (without review)
+      const bookId = addBook(db)({
+        title: book.title,
+        pages: book.pages,
+        pub_year: book.pub_year,
+        genre: book.genre,
+      });
+
+      // Add authors
+      for (const authorName of authors) {
+        const authorId = db.getOrAddWriter(authorName, 'author');
+        db.addBookWriterLink(bookId, authorId, 'author');
+      }
+
+      // Add translators
+      for (const translatorName of translators) {
+        const translatorId = db.getOrAddWriter(translatorName, 'translator');
+        db.addBookWriterLink(bookId, translatorId, 'translator');
+      }
+
       console.log(colors.green(`Book added with ID: ${bookId}`));
     }
   } catch (error) {

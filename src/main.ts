@@ -5,18 +5,14 @@ import { Database } from "./db.ts";
 import {
   handleAddCommand,
   handleEditReviewCommand,
-  handleImportMarkdownCommand,
   handleReportCommand,
   handleReviewCommand,
   handleShowCommand,
 } from "./commands/index.ts";
 import { colors, getHwidoBanner } from "./utils/index.ts";
 
-// Initialize database
 const db = new Database("libro.db");
 
-// 도움말을 요청했을 때 배너 표시
-// Display banner when help is requested
 if (
   Deno.args.includes("--help") || Deno.args.includes("-h") ||
   Deno.args.length === 0
@@ -24,12 +20,10 @@ if (
   console.log(colors.cyan(getHwidoBanner()));
 }
 
-// Create the main command
 const command = new Command()
   .name("libro")
-  .version("0.1.6")
+  .version("0.1.7")
   .description("A command-line book tracking tool with data stored in SQLite")
-  // Original Libro commands
   .command("add", "Add a new book")
   .action(async () => {
     await handleAddCommand(db);
@@ -47,7 +41,6 @@ const command = new Command()
   .action((options) => {
     handleReportCommand(db, options);
   })
-  // Enhanced commands not in original Libro
   .command("review <id:number>", "Add or edit a review for a book")
   .action(async (_, id) => {
     await handleReviewCommand(db, id);
@@ -56,17 +49,11 @@ const command = new Command()
   .option("--path <path:string>", "Path to directory with markdown files", {
     default: "data/assets",
   })
-  .option("--sync", "Sync database to markdown files", { default: false })
-  .action(async (options) => {
-    await handleImportMarkdownCommand(db, options);
-  })
   .command("edit-review <id:number>", "Edit a book review using system editor")
   .action(async (_, id) => {
     await handleEditReviewCommand(db, id);
   });
 
-// Parse and execute the command
 await command.parse(Deno.args);
 
-// Close the database connection when the program finishes
 db.close();

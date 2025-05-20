@@ -1,18 +1,27 @@
 /**
  * 마크다운 파일에서 책 리뷰 데이터를 파싱하는 유틸리티
  *
- * 지원하는 마크다운 형식:
+ * 수정된 마크다운 형식:
  * ```
- * # 책 제목
+ * # 도서 정보 (수정 불가)
  *
- * 작가: 작가 이름
+ * 제목: 책 제목
+ * 작가:
+ * - 작가1
+ * - 작가2
+ * 번역:
+ * - 번역가1
+ * - 번역가2
  * 장르: Fiction|Nonfiction
  * 출판년도: 2023
  * 페이지: 320
+ *
+ * # 리뷰 정보
+ *
  * 읽은 날짜: 2023-04-15
  * 평점: 4.5
  *
- * ## 리뷰
+ * # 리뷰 내용
  *
  * 책에 대한 리뷰 내용...
  * ```
@@ -21,9 +30,14 @@
 /**
  * 책 리뷰 정보를 위한 인터페이스
  */
+export interface Writer {
+  name: string;
+  type: 'author' | 'translator';
+}
+
 export interface BookReview {
   title?: string;
-  author?: string;
+  writers?: Writer[];
   genre?: string;
   pub_year?: number;
   pages?: number;
@@ -39,41 +53,69 @@ export interface BookReview {
  * @returns 파싱된 책 리뷰 데이터
  */
 export function parseMarkdownReview(markdown: string): BookReview {
-  const result: BookReview = {};
-
-  // 제목 추출 (# 으로 시작하는 첫 번째 줄)
-  const titleMatch = markdown.match(/^#\s+(.+)$/m);
-  if (titleMatch) {
-    result.title = titleMatch[1].trim();
-  }
-
-  // 메타데이터 추출 (key: value 형식)
-  const metadataMatches = {
-    author: markdown.match(/작가:\s*(.+)$/m),
-    genre: markdown.match(/장르:\s*(.+)$/m),
-    pubYear: markdown.match(/출판년도:\s*(\d+)$/m),
-    pages: markdown.match(/페이지:\s*(\d+)$/m),
-    dateRead: markdown.match(/읽은 날짜:\s*(.+)$/m),
-    rating: markdown.match(/평점:\s*(\d+(\.\d+)?)$/m),
+  const result: BookReview = {
+    writers: [],
   };
 
-  if (metadataMatches.author) result.author = metadataMatches.author[1].trim();
-  if (metadataMatches.genre) result.genre = metadataMatches.genre[1].trim();
-  if (metadataMatches.pubYear) {
-    result.pub_year = parseInt(metadataMatches.pubYear[1]);
-  }
-  if (metadataMatches.pages) result.pages = parseInt(metadataMatches.pages[1]);
-  if (metadataMatches.dateRead) {
-    result.date_read = metadataMatches.dateRead[1].trim();
-  }
-  if (metadataMatches.rating) {
-    result.rating = parseFloat(metadataMatches.rating[1]);
+  // 섹션별로 분리
+  const sections = markdown.split(/(?=# )/);
+
+  // 도서 정보 섹션 파싱
+  const bookInfoSection = sections.find(s => s.startsWith('# 도서 정보'))?.trim() || '';
+  if (bookInfoSection) {
+    // 제목 파싱
+    const titleMatch = bookInfoSection.match(/제목:\s*(.+)$/m);
+    if (titleMatch) result.title = titleMatch[1].trim();
+
+    // 작가 파싱
+    const authorSection = bookInfoSection.match(/작가:\n((?:-[^\n]+\n?)+)/m);
+    if (authorSection) {
+      const authors = authorSection[1].match(/-\s*([^\n]+)/g) || [];
+      authors.forEach(author => {
+        result.writers?.push({
+          name: author.replace(/^-\s*/, '').trim(),
+          type: 'author'
+        });
+      });
+    }
+
+    // 번역가 파싱
+    const translatorSection = bookInfoSection.match(/번역:\n((?:-[^\n]+\n?)+)/m);
+    if (translatorSection) {
+      const translators = translatorSection[1].match(/-\s*([^\n]+)/g) || [];
+      translators.forEach(translator => {
+        result.writers?.push({
+          name: translator.replace(/^-\s*/, '').trim(),
+          type: 'translator'
+        });
+      });
+    }
+
+    // 기타 메타데이터 파싱
+    const genreMatch = bookInfoSection.match(/장르:\s*(.+)$/m);
+    const pubYearMatch = bookInfoSection.match(/출판년도:\s*(\d+)$/m);
+    const pagesMatch = bookInfoSection.match(/페이지:\s*(\d+)$/m);
+
+    if (genreMatch) result.genre = genreMatch[1].trim();
+    if (pubYearMatch) result.pub_year = parseInt(pubYearMatch[1]);
+    if (pagesMatch) result.pages = parseInt(pagesMatch[1]);
   }
 
-  // 리뷰 추출 (## 리뷰 이후의 모든 텍스트)
-  const reviewMatch = markdown.match(/##\s+리뷰\s*\n\s*(.+(?:\n.+)*)/);
-  if (reviewMatch) {
-    result.review = reviewMatch[1].trim();
+  // 리뷰 정보 섹션 찾기
+  const reviewInfoSection = sections.find(s => s.startsWith('# 리뷰 정보'))?.trim() || '';
+  if (reviewInfoSection) {
+    const dateMatch = reviewInfoSection.match(/읽은 날짜:\s*(.+)$/m);
+    const ratingMatch = reviewInfoSection.match(/평점:\s*(\d+(\.\d+)?)$/m);
+
+    if (dateMatch) result.date_read = dateMatch[1].trim();
+    if (ratingMatch) result.rating = parseFloat(ratingMatch[1]);
+  }
+
+  // 리뷰 내용 섹션 찾기
+  const reviewContentSection = sections.find(s => s.startsWith('# 리뷰 내용'))?.trim() || '';
+  if (reviewContentSection) {
+    const content = reviewContentSection.replace(/# 리뷰 내용\s*/, '').trim();
+    if (content) result.review = content;
   }
 
   return result;
@@ -83,34 +125,46 @@ export function parseMarkdownReview(markdown: string): BookReview {
  * 책 리뷰 데이터를 마크다운 형식으로 변환합니다
  *
  * @param review 마크다운으로 변환할 책 리뷰 데이터
+ * @param editable 리뷰 수정 가능 여부
  * @returns 생성된 마크다운 문자열
  */
-export function bookReviewToMarkdown(review: BookReview): string {
+export function bookReviewToMarkdown(review: BookReview, editable = true): string {
   const sections = [];
 
-  // 제목 섹션
-  if (review.title) {
-    sections.push(`# ${review.title}\n`);
+  // 도서 정보 섹션 (읽기 전용)
+  sections.push('# 도서 정보 (수정 불가)\n');
+  const bookInfo = [];
+  if (review.title) bookInfo.push(`제목: ${review.title}`);
+
+  // 작가 정보
+  if (review.writers && review.writers.length > 0) {
+    const authors = review.writers.filter(w => w.type === 'author');
+    if (authors.length > 0) {
+      bookInfo.push('작가:');
+      authors.forEach(author => bookInfo.push(`- ${author.name}`));
+    }
+
+    const translators = review.writers.filter(w => w.type === 'translator');
+    if (translators.length > 0) {
+      bookInfo.push('번역:');
+      translators.forEach(translator => bookInfo.push(`- ${translator.name}`));
+    }
   }
 
-  // 메타데이터 섹션
-  const metadata = [];
-  if (review.author) metadata.push(`작가: ${review.author}`);
-  if (review.genre) metadata.push(`장르: ${review.genre}`);
-  if (review.pub_year) metadata.push(`출판년도: ${review.pub_year}`);
-  if (review.pages) metadata.push(`페이지: ${review.pages}`);
-  if (review.date_read) metadata.push(`읽은 날짜: ${review.date_read}`);
-  if (review.rating) metadata.push(`평점: ${review.rating}`);
+  if (review.genre) bookInfo.push(`장르: ${review.genre}`);
+  if (review.pub_year) bookInfo.push(`출판년도: ${review.pub_year}`);
+  if (review.pages) bookInfo.push(`페이지: ${review.pages}`);
+  sections.push(bookInfo.join('\n'));
 
-  if (metadata.length > 0) {
-    sections.push(metadata.join("\n"));
-  }
+  // 리뷰 정보 섹션 (수정 가능)
+  sections.push('\n# 리뷰 정보 (아래 내용을 수정하세요)\n');
+  sections.push(`읽은 날짜: ${review.date_read || '____-__-__'}`);
+  sections.push(`평점: ${review.rating || '_'}`);
 
-  // 리뷰 섹션
-  if (review.review) {
-    sections.push(`## 리뷰\n\n${review.review}`);
-  }
+  // 리뷰 내용 섹션 (수정 가능)
+  sections.push('\n# 리뷰 내용 (아래 내용을 수정하세요)\n');
+  sections.push(review.review || '이 책에 대한 리뷰를 작성하세요.');
 
-  return sections.join("\n\n") + "\n";
+  return sections.join('\n');
 }
 

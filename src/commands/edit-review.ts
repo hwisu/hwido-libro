@@ -38,10 +38,10 @@ export async function handleEditReviewCommand(
   // 첫 번째 리뷰 선택 (일반적으로 책당 하나의 리뷰만 있음)
   const review = reviews[0];
 
-  // 마크다운 형식으로 리뷰 데이터 생성
+  // 리뷰 데이터 생성
   const reviewData = {
     title: book.title,
-    author: book.author,
+    writers: db.getBookWriters(bookId),
     genre: book.genre,
     pub_year: book.pub_year,
     pages: book.pages,
@@ -50,7 +50,7 @@ export async function handleEditReviewCommand(
     review: review.review,
   };
 
-  const markdownText = bookReviewToMarkdown(reviewData);
+  const markdownText = bookReviewToMarkdown(reviewData, false);
 
   console.log(
     colors.cyan(`에디터를 시작하여 '${book.title}'의 리뷰를 편집합니다...`),
@@ -79,23 +79,6 @@ export async function handleEditReviewCommand(
       review: updatedReviewData.review || "",
       date_read: updatedReviewData.date_read,
     });
-
-    // 책 정보도 업데이트 (선택적으로 변경 가능)
-    if (
-      updatedReviewData.title ||
-      updatedReviewData.author ||
-      updatedReviewData.genre ||
-      updatedReviewData.pub_year ||
-      updatedReviewData.pages
-    ) {
-      db.updateBook(bookId, {
-        title: updatedReviewData.title,
-        author: updatedReviewData.author,
-        genre: updatedReviewData.genre,
-        pub_year: updatedReviewData.pub_year,
-        pages: updatedReviewData.pages,
-      });
-    }
 
     console.log(colors.green(`리뷰가 성공적으로 업데이트되었습니다.`));
   } else {
