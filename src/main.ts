@@ -22,7 +22,7 @@ if (
 
 const command = new Command()
   .name("libro")
-  .version("0.1.7")
+  .version("0.1.8")
   .description("A command-line book tracking tool with data stored in SQLite")
   .command("add", "Add a new book")
   .action(async () => {

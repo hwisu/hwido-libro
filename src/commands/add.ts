@@ -11,27 +11,18 @@ import {
 } from "../utils/errors.ts";
 import { toInt } from "../utils/fp.ts";
 
-/**
- * Handles the 'add' command to add a new book
- */
-
-// 프롬프트 도우미 함수들 - 화살표 함수와 ES 기능 최대 활용
 const promptBook = async () => {
   try {
-    // 필수 입력
     const title = await Input.prompt({ message: "Title", minLength: 1 });
     validateRequired(title, "Title");
 
-    // 여러 작가 입력 지원
     const author = await Input.prompt({
       message: "Author(s) (comma-separated)",
       minLength: 1,
     });
     validateRequired(author, "Author");
 
-    // 번역가 입력 추가
     const translator = await Input.prompt({
-      // 여러 번역가 입력 지원
       message: "Translator(s) (comma-separated, optional)",
       default: "",
     });
