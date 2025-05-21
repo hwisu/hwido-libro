@@ -60,4 +60,3 @@ export async function editWithSystemEditor(
     return null;
   }
 }
-

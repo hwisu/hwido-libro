@@ -6,11 +6,6 @@ export {
   bookReviewToMarkdown,
   parseMarkdownReview,
 } from "./markdown.ts";
-export {
-  ensureDir,
-  listFiles,
-  readTextFile,
-  writeTextFile,
-} from "./fs.ts";
+export { ensureDir, listFiles, readTextFile, writeTextFile } from "./fs.ts";
 export { editWithSystemEditor } from "./editor.ts";
 export { getHwidoBanner } from "./banner.ts";

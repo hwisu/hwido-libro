@@ -117,4 +117,3 @@ export function barChart(
   output += rows.join("\n");
   return output;
 }
-

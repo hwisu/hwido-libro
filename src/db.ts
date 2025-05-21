@@ -56,14 +56,22 @@ export class Database {
       // Check if translator column exists before trying to add it (robustness)
       try {
         this.#db.query("SELECT translator FROM books LIMIT 1");
-        console.log("Translator column already exists, skipping add in v2 check.");
+        console.log(
+          "Translator column already exists, skipping add in v2 check.",
+        );
       } catch (e) {
+        console.log(e);
         // Column does not exist, safely try to add it if oldVersion was 1
         if (oldVersion < 2) {
           try {
             this.#db.execute(`ALTER TABLE books ADD COLUMN translator TEXT;`);
             console.log("Added translator column in v2 check.");
-          } catch (addError) { console.warn("Could not add translator column in v2 check:", addError); /* ignore */ }
+          } catch (addError) {
+            console.warn(
+              "Could not add translator column in v2 check:",
+              addError,
+            ); /* ignore */
+          }
         }
       }
       this.#db.execute("PRAGMA user_version = 2;");
@@ -82,23 +90,34 @@ export class Database {
       `);
 
       // Check if columns exist before adding them using PRAGMA table_info
-      const columns = this.#db.query<[number, string, string, number, number, number, number]>("PRAGMA table_info(books);");
-      const columnNames = columns.map(col => col[1]); // Column name is at index 1
+      const columns = this.#db.query<
+        [number, string, string, number, number, number, number]
+      >("PRAGMA table_info(books);");
+      const columnNames = columns.map((col) => col[1]); // Column name is at index 1
 
-      if (!columnNames.includes('author_id')) {
+      if (!columnNames.includes("author_id")) {
         try {
           this.#db.execute(`ALTER TABLE books ADD COLUMN author_id INTEGER;`);
           console.log("Added author_id column in v3.");
-        } catch (e) { console.warn("Could not add author_id column in v3:", e); /* ignore */ }
+        } catch (e) {
+          console.warn("Could not add author_id column in v3:", e); /* ignore */
+        }
       } else {
         console.log("author_id column already exists, skipping add in v3.");
       }
 
-      if (!columnNames.includes('translator_id')) {
+      if (!columnNames.includes("translator_id")) {
         try {
-          this.#db.execute(`ALTER TABLE books ADD COLUMN translator_id INTEGER;`);
+          this.#db.execute(
+            `ALTER TABLE books ADD COLUMN translator_id INTEGER;`,
+          );
           console.log("Added translator_id column in v3.");
-        } catch (e) { console.warn("Could not add translator_id column in v3:", e); /* ignore */ }
+        } catch (e) {
+          console.warn(
+            "Could not add translator_id column in v3:",
+            e,
+          ); /* ignore */
+        }
       } else {
         console.log("translator_id column already exists, skipping add in v3.");
       }
@@ -132,14 +151,19 @@ export class Database {
       try {
         // Check if column exists by trying a query
         this.#db.query("SELECT author_id FROM books LIMIT 1");
-        console.log("author_id column exists, proceeding with data migration to book_writers.");
+        console.log(
+          "author_id column exists, proceeding with data migration to book_writers.",
+        );
         this.#db.execute(`
           INSERT INTO book_writers (book_id, writer_id, type)
           SELECT id, author_id, 'author' FROM books WHERE author_id IS NOT NULL;
         `);
         console.log("Migrated author_id data to book_writers.");
       } catch (e) {
-        console.log("author_id column not found or error during migration to book_writers:", e);
+        console.log(
+          "author_id column not found or error during migration to book_writers:",
+          e,
+        );
         /* author_id might not exist if migration 3 failed previously, ignore data migration */
       }
 
@@ -148,14 +172,19 @@ export class Database {
       try {
         // Check if column exists by trying a query
         this.#db.query("SELECT translator_id FROM books LIMIT 1");
-        console.log("translator_id column exists, proceeding with data migration to book_writers.");
+        console.log(
+          "translator_id column exists, proceeding with data migration to book_writers.",
+        );
         this.#db.execute(`
           INSERT INTO book_writers (book_id, writer_id, type)
           SELECT id, translator_id, 'translator' FROM books WHERE translator_id IS NOT NULL AND TRIM(translator) != '';
         `);
         console.log("Migrated translator_id data to book_writers.");
       } catch (e) {
-        console.log("translator_id column not found or error during migration to book_writers:", e);
+        console.log(
+          "translator_id column not found or error during migration to book_writers:",
+          e,
+        );
         /* translator_id might not exist, ignore data migration */
       }
 
@@ -197,7 +226,7 @@ export class Database {
   /**
    * Gets the ID for a writer (author or translator) by name, adding them if they don't exist.
    */
-  getOrAddWriter(name: string, type: 'author' | 'translator'): number {
+  getOrAddWriter(name: string, type: "author" | "translator"): number {
     // Check if writer already exists
     const existingWriter = this.#db.query<[number]>(
       `SELECT id FROM writers WHERE name = ? AND type = ?;`,
@@ -219,7 +248,11 @@ export class Database {
   /**
    * Adds a link between a book and a writer (author or translator) in the book_writers table.
    */
-  addBookWriterLink(bookId: number, writerId: number, type: 'author' | 'translator'): void {
+  addBookWriterLink(
+    bookId: number,
+    writerId: number,
+    type: "author" | "translator",
+  ): void {
     this.#db.query(
       `INSERT INTO book_writers (book_id, writer_id, type) VALUES (?, ?, ?);`,
       [bookId, writerId, type],
@@ -260,14 +293,16 @@ export class Database {
    * Without filters returns all books.
    */
   getBooks(filter?: { id?: number; year?: number }): Array<any> {
-    let query = `
+    const query = `
       SELECT DISTINCT
         b.id, b.title, b.pages, b.pub_year, b.genre,
         w.id AS writer_id, w.name AS writer_name, w.type AS writer_type
       FROM books b
       LEFT JOIN book_writers bw ON b.id = bw.book_id
       LEFT JOIN writers w ON bw.writer_id = w.id
-      ${filter?.id ? 'WHERE b.id = ?' : filter?.year ? 'WHERE b.pub_year = ?' : ''}
+      ${
+      filter?.id ? "WHERE b.id = ?" : filter?.year ? "WHERE b.pub_year = ?" : ""
+    }
       ORDER BY b.id, w.type, w.name
     `;
 
@@ -276,16 +311,31 @@ export class Database {
     const booksMap = new Map<number, any>();
 
     for (const row of rows) {
-      const [bookId, title, pages, pub_year, genre, writer_id, writer_name, writer_type] = row;
+      const [
+        bookId,
+        title,
+        pages,
+        pub_year,
+        genre,
+        writer_id,
+        writer_name,
+        writer_type,
+      ] = row;
 
       if (!booksMap.has(bookId as number)) {
-        // 각 책의 최신 리뷰를 가져옴
-        const latestReview = this.#db.query(`
+        const reviews = this.#db.query(
+          `
           SELECT review, rating, date_read
           FROM reviews
           WHERE book_id = ?
-          ORDER BY date_read DESC LIMIT 1
-        `, [bookId])[0];
+          ORDER BY date_read DESC
+        `,
+          [bookId],
+        ).map(([review, rating, date_read]) => ({
+          review,
+          rating,
+          date_read,
+        }));
 
         booksMap.set(bookId as number, {
           id: bookId,
@@ -295,18 +345,16 @@ export class Database {
           genre,
           authors: [],
           translators: [],
-          review: latestReview ? latestReview[0] : null,
-          rating: latestReview ? latestReview[1] : null,
-          date_read: latestReview ? latestReview[2] : null
+          reviews: reviews,
         });
       }
 
       if (writer_id !== null) {
         const writer = { id: writer_id, name: writer_name };
         const book = booksMap.get(bookId as number);
-        if (writer_type === 'author') {
+        if (writer_type === "author") {
           book.authors.push(writer);
-        } else if (writer_type === 'translator') {
+        } else if (writer_type === "translator") {
           book.translators.push(writer);
         }
       }
@@ -433,13 +481,18 @@ export class Database {
   /**
    * Gets all writers (authors and translators) for a specific book
    */
-  getBookWriters(bookId: number): Array<{ name: string; type: 'author' | 'translator' }> {
-    return this.#db.query<[string, 'author' | 'translator']>(`
+  getBookWriters(
+    bookId: number,
+  ): Array<{ name: string; type: "author" | "translator" }> {
+    return this.#db.query<[string, "author" | "translator"]>(
+      `
       SELECT w.name, bw.type
       FROM writers w
       JOIN book_writers bw ON w.id = bw.writer_id
       WHERE bw.book_id = ?
       ORDER BY bw.type, w.name
-    `, [bookId]).map(([name, type]) => ({ name, type }));
+    `,
+      [bookId],
+    ).map(([name, type]) => ({ name, type }));
   }
 }

@@ -150,8 +150,14 @@ export async function handleAddCommand(db: Database): Promise<void> {
     const book = await promptBook(); // book now contains author/translator names string
 
     // Parse authors and translators strings into arrays
-    const authors = book.author.split(',').map(name => name.trim()).filter(name => name.length > 0);
-    const translators = book.translator ? book.translator.split(',').map(name => name.trim()).filter(name => name.length > 0) : [];
+    const authors = book.author.split(",").map((name) => name.trim()).filter(
+      (name) => name.length > 0,
+    );
+    const translators = book.translator
+      ? book.translator.split(",").map((name) => name.trim()).filter((name) =>
+        name.length > 0
+      )
+      : [];
 
     // 2. 리뷰 정보 수집
     const review = await promptReview();
@@ -186,14 +192,14 @@ export async function handleAddCommand(db: Database): Promise<void> {
 
       // Add authors
       for (const authorName of authors) {
-        const authorId = db.getOrAddWriter(authorName, 'author');
-        db.addBookWriterLink(bookId, authorId, 'author');
+        const authorId = db.getOrAddWriter(authorName, "author");
+        db.addBookWriterLink(bookId, authorId, "author");
       }
 
       // Add translators
       for (const translatorName of translators) {
-        const translatorId = db.getOrAddWriter(translatorName, 'translator');
-        db.addBookWriterLink(bookId, translatorId, 'translator');
+        const translatorId = db.getOrAddWriter(translatorName, "translator");
+        db.addBookWriterLink(bookId, translatorId, "translator");
       }
 
       console.log(colors.green(`Book added with ID: ${bookId}`));

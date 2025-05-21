@@ -17,7 +17,6 @@ export async function ensureDir(path: string): Promise<void> {
   }
 }
 
-
 /**
  * 디렉토리의 모든 파일 목록을 반환합니다
  */
@@ -58,4 +57,3 @@ export async function writeTextFile(
 ): Promise<void> {
   await Deno.writeTextFile(path, content);
 }
-

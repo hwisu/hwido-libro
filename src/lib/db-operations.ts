@@ -26,24 +26,25 @@ export interface ExtendedBook extends Book {
 }
 
 // 책 추가 함수
-export const addBook = (db: Database) => (book: Omit<Book, 'id' | 'reviews'>): number => {
-  try {
-    const id = db.addBook({
-      title: book.title,
-      pages: book.pages,
-      pub_year: book.pub_year,
-      genre: book.genre,
-    });
-    return id;
-  } catch (error) {
-    throw createError(
-      `Failed to add book: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-      "DATABASE",
-    );
-  }
-};
+export const addBook =
+  (db: Database) => (book: Omit<Book, "id" | "reviews">): number => {
+    try {
+      const id = db.addBook({
+        title: book.title,
+        pages: book.pages,
+        pub_year: book.pub_year,
+        genre: book.genre,
+      });
+      return id;
+    } catch (error) {
+      throw createError(
+        `Failed to add book: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        "DATABASE",
+      );
+    }
+  };
 
 // 리뷰 추가 함수
 export const addReview = (db: Database) => (review: Review): number => {
@@ -85,15 +86,15 @@ export const addBookWithReview = (db: Database) =>
 
     // Add authors
     for (const authorName of book.authors) {
-      const authorId = db.getOrAddWriter(authorName, 'author');
-      db.addBookWriterLink(bookId, authorId, 'author');
+      const authorId = db.getOrAddWriter(authorName, "author");
+      db.addBookWriterLink(bookId, authorId, "author");
     }
 
     // Add translators
     if (book.translators) {
       for (const translatorName of book.translators) {
-        const translatorId = db.getOrAddWriter(translatorName, 'translator');
-        db.addBookWriterLink(bookId, translatorId, 'translator');
+        const translatorId = db.getOrAddWriter(translatorName, "translator");
+        db.addBookWriterLink(bookId, translatorId, "translator");
       }
     }
 
@@ -118,19 +119,21 @@ export const addBookWithReview = (db: Database) =>
 };
 
 // 책 조회 함수
-export const getBooks =
-  (db: Database) => (filter?: { id?: number; year?: number }): ExtendedBook[] => {
-    try {
-      return db.getBooks(filter);
-    } catch (error) {
-      throw createError(
-        `Failed to get books: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-        "DATABASE",
-      );
-    }
-  };
+export const getBooks = (db: Database) =>
+(
+  filter?: { id?: number; year?: number },
+): ExtendedBook[] => {
+  try {
+    return db.getBooks(filter);
+  } catch (error) {
+    throw createError(
+      `Failed to get books: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      "DATABASE",
+    );
+  }
+};
 
 // 리뷰 가져오기
 export const getReviews = (db: Database) => (bookId: number): Review[] => {

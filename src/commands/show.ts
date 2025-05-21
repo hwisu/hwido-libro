@@ -9,7 +9,7 @@ export interface ShowOptions {
   json?: boolean;
 }
 
-type RowType = [string, string, string, string, string];
+type RowType = [string, string, string, string, string, string, string, string, string];
 
 /**
  * Handles the 'show' command to display books
@@ -49,12 +49,12 @@ const displayDetailedBook = (book: ExtendedBook): void => {
   );
 
   if (book.authors && book.authors.length > 0) {
-    const authorNames = book.authors.map(a => a.name).join(", ");
+    const authorNames = book.authors.map((a) => a.name).join(", ");
     console.log(colors.italic(`by ${authorNames}`));
   }
 
   if (book.translators && book.translators.length > 0) {
-    const translatorNames = book.translators.map(t => t.name).join(", ");
+    const translatorNames = book.translators.map((t) => t.name).join(", ");
     console.log(colors.italic(`translated by ${translatorNames}`));
   }
 
@@ -72,10 +72,12 @@ const displayDetailedBook = (book: ExtendedBook): void => {
       console.log(colors.bold(`Review ${index + 1}:`));
       console.log(`  Date: ${review.date_read}`);
       console.log(
-        `  Rating: ${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`,
+        `  Rating: ${"★".repeat(review.rating)}${
+          "☆".repeat(5 - review.rating)
+        }`,
       );
       console.log(`  Review: ${review.review}`);
-      if (index < book.reviews.length - 1) {
+      if (book.reviews && index < book.reviews.length - 1) {
         console.log(""); // Add a blank line between reviews
       }
     });
@@ -130,7 +132,7 @@ const createBooksTable = (title?: string) => (books: ExtendedBook[]) => {
   }
 
   const table = new Table()
-    .header(["id", "Title", "Author / Translator", "Rating", "Date Read"])
+    .header(["id", "Title", "Genre", "Year", "Pages", "Author", "Rating", "Date Read", "Review"])
     .border(true)
     .padding(1);
 
@@ -146,13 +148,17 @@ const createBooksTable = (title?: string) => (books: ExtendedBook[]) => {
       : null;
 
     // Combine authors and translators for display
-    const authorNames = book.authors.map(a => a.name).join(", ");
-    const translatorNames = book.translators.map(t => t.name).join(", ");
-    const writerDisplay = authorNames + (translatorNames ? ` / ${translatorNames}` : "");
+    const authorNames = book.authors.map((a) => a.name).join(", ");
+    const translatorNames = book.translators.map((t) => t.name).join(", ");
+    const writerDisplay = authorNames +
+      (translatorNames ? ` / ${translatorNames}` : "");
 
     return [
-      book.id?.toString() ?? '', // Safely access and convert id, default to empty string if undefined
+      book.id?.toString() ?? "", // Safely access and convert id, default to empty string if undefined
       book.title,
+      book.genre ?? "unknown",
+      book.pub_year ? book.pub_year.toString() : "unknown",
+      book.pages ? book.pages.toString() : "unknown",
       writerDisplay,
       review ? review.rating.toString() : "",
       review
@@ -162,6 +168,7 @@ const createBooksTable = (title?: string) => (books: ExtendedBook[]) => {
           year: "numeric",
         })
         : "",
+      review ? review.review : "",
     ] as RowType;
   });
 
