@@ -1,0 +1,8 @@
+[workspace]
+members = ["libro-cli"]
+resolver = "2"
+
+[workspace.dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.8"
