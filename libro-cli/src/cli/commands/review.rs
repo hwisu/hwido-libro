@@ -1,9 +1,9 @@
+use crate::lib::db_operations::Database;
+use crate::lib::errors::LibroResult;
+use crate::lib::models::BookFilter;
 use crate::utils::database::get_db_path;
 use crate::utils::error_handler::{print_info, print_success, validation::validate_book_id};
-use crate::utils::input::{prompt_for_review, prompt_edit_review, select_from_list};
-use libro_cli::db_operations::Database;
-use libro_cli::errors::LibroResult;
-use libro_cli::models::BookFilter;
+use crate::utils::input::{prompt_edit_review, prompt_for_review, select_from_list};
 
 /// Add or edit a review for a book
 pub fn run(id: u32) -> LibroResult<()> {
@@ -21,7 +21,7 @@ pub fn run(id: u32) -> LibroResult<()> {
     let books = db.get_books(&filter)?;
 
     if books.is_empty() {
-        return Err(libro_cli::errors::LibroError::BookNotFound { id: book_id });
+        return Err(crate::lib::errors::LibroError::BookNotFound { id: book_id });
     }
 
     let book = &books[0];
@@ -46,11 +46,7 @@ pub fn run(id: u32) -> LibroResult<()> {
         }
 
         // Ask user what they want to do
-        let options = vec![
-            "Add a new review",
-            "Edit an existing review",
-            "Cancel"
-        ];
+        let options = vec!["Add a new review", "Edit an existing review", "Cancel"];
 
         let choice = select_from_list("What would you like to do?", &options)?;
 
@@ -59,7 +55,10 @@ pub fn run(id: u32) -> LibroResult<()> {
                 // Add new review
                 let new_review = prompt_for_review(book_id, book_title)?;
                 let review_id = db.add_review(&new_review)?;
-                print_success(&format!("Review added successfully! Review ID: {}", review_id));
+                print_success(&format!(
+                    "Review added successfully! Review ID: {}",
+                    review_id
+                ));
             }
             1 => {
                 // Edit existing review
@@ -90,7 +89,7 @@ pub fn run(id: u32) -> LibroResult<()> {
 
                 let review_id = review_to_edit
                     .id
-                    .ok_or_else(|| libro_cli::errors::LibroError::internal("Review missing ID"))?;
+                    .ok_or_else(|| crate::lib::errors::LibroError::internal("Review missing ID"))?;
 
                 let updated_review = prompt_edit_review(review_to_edit, book_title)?;
                 db.update_review(review_id, &updated_review)?;
@@ -105,7 +104,10 @@ pub fn run(id: u32) -> LibroResult<()> {
         // No existing reviews, add new one
         let new_review = prompt_for_review(book_id, book_title)?;
         let review_id = db.add_review(&new_review)?;
-        print_success(&format!("Review added successfully! Review ID: {}", review_id));
+        print_success(&format!(
+            "Review added successfully! Review ID: {}",
+            review_id
+        ));
     }
 
     Ok(())

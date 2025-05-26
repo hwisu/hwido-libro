@@ -2,9 +2,9 @@ use chrono::NaiveDate;
 use console::style;
 use dialoguer::{Confirm, Input, MultiSelect, Select};
 
+use crate::lib::errors::{LibroError, LibroResult};
+use crate::lib::models::*;
 use crate::utils::date::{current_date, parse_and_validate_date};
-use libro_cli::errors::{LibroError, LibroResult};
-use libro_cli::models::*;
 
 /// Prompt for book information interactively
 pub fn prompt_for_book() -> LibroResult<NewBook> {
@@ -39,7 +39,10 @@ pub fn prompt_for_book() -> LibroResult<NewBook> {
 
         if author.trim().is_empty() {
             if authors.is_empty() {
-                println!("{} At least one author is required.", style("!").red().bold());
+                println!(
+                    "{} At least one author is required.",
+                    style("!").red().bold()
+                );
                 continue;
             } else {
                 break;
@@ -108,7 +111,7 @@ pub fn prompt_for_book() -> LibroResult<NewBook> {
         Some(year_input.parse()?)
     };
 
-        // Genre (required, with predefined options)
+    // Genre (required, with predefined options)
     let genres = vec![
         "Fiction",
         "Non-fiction",
@@ -128,20 +131,24 @@ pub fn prompt_for_book() -> LibroResult<NewBook> {
         .default(0)
         .interact()?;
 
-         let genre = if genres[selection] == "Other" {
-         Input::new()
-             .with_prompt(format!("{} {}", style("*").red().bold(), "Enter custom genre"))
-             .validate_with(|input: &String| -> Result<(), &str> {
-                 if input.trim().is_empty() {
-                     Err("Genre cannot be empty")
-                 } else {
-                     Ok(())
-                 }
-             })
-             .interact_text()?
-     } else {
-         genres[selection].to_string()
-     };
+    let genre = if genres[selection] == "Other" {
+        Input::new()
+            .with_prompt(format!(
+                "{} {}",
+                style("*").red().bold(),
+                "Enter custom genre"
+            ))
+            .validate_with(|input: &String| -> Result<(), &str> {
+                if input.trim().is_empty() {
+                    Err("Genre cannot be empty")
+                } else {
+                    Ok(())
+                }
+            })
+            .interact_text()?
+    } else {
+        genres[selection].to_string()
+    };
 
     Ok(NewBook {
         title,

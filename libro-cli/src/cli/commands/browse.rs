@@ -1,9 +1,9 @@
+use crate::lib::db_operations::Database;
+use crate::lib::errors::LibroResult;
+use crate::lib::models::BookFilter;
 use crate::utils::database::get_db_path;
 use crate::utils::error_handler::{print_info, validation::validate_year_option};
 use crate::utils::output::{Displayable, OutputFormat};
-use libro_cli::db_operations::Database;
-use libro_cli::errors::LibroResult;
-use libro_cli::models::BookFilter;
 use console::style;
 
 /// Browse and search books
@@ -46,7 +46,12 @@ pub fn run(query: Option<String>, year: Option<u32>, json: bool) -> LibroResult<
 
     // Show search info
     if let Some(q) = &query {
-        println!("{}", style(&format!("🔍 Search results for '{}'", q)).bold().cyan());
+        println!(
+            "{}",
+            style(&format!("🔍 Search results for '{}'", q))
+                .bold()
+                .cyan()
+        );
         println!("{}", "─".repeat(50));
     } else {
         println!("{}", style("📚 All Books").bold().cyan());
@@ -68,9 +73,15 @@ pub fn run(query: Option<String>, year: Option<u32>, json: bool) -> LibroResult<
 
     // Show summary
     if !json && books.len() > 1 {
-        println!("\n{}", style(&format!("Found {} book(s)", books.len())).dim());
+        println!(
+            "\n{}",
+            style(&format!("Found {} book(s)", books.len())).dim()
+        );
         if query.is_some() {
-            println!("{}", style("💡 Tip: Use 'libro-cli browse' without arguments to see all books").dim());
+            println!(
+                "{}",
+                style("💡 Tip: Use 'libro-cli browse' without arguments to see all books").dim()
+            );
         }
     }
 

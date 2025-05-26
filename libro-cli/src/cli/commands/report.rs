@@ -1,16 +1,23 @@
+use crate::lib::db_operations::Database;
+use crate::lib::errors::LibroResult;
+use crate::lib::models::BookFilter;
 use crate::utils::database::get_db_path;
-use crate::utils::error_handler::{print_info, validation::validate_year_option};
-use crate::utils::output::{format_reading_stats};
 use crate::utils::date::{format_date, relative_date_description};
-use libro_cli::db_operations::Database;
-use libro_cli::errors::LibroResult;
-use libro_cli::models::BookFilter;
+use crate::utils::error_handler::{print_info, validation::validate_year_option};
+use crate::utils::output::format_reading_stats;
 use chrono::Datelike;
 use console::style;
 use std::collections::HashMap;
 
 /// Generate reading reports and summaries
-pub fn run(show_authors: bool, show_books: bool, show_reviews: bool, year: Option<u32>, years: bool, limit: u32) -> LibroResult<()> {
+pub fn run(
+    show_authors: bool,
+    show_books: bool,
+    show_reviews: bool,
+    year: Option<u32>,
+    years: bool,
+    limit: u32,
+) -> LibroResult<()> {
     // Initialize database connection
     let db = Database::new(&get_db_path())?;
 
@@ -68,7 +75,13 @@ pub fn run(show_authors: bool, show_books: bool, show_reviews: bool, year: Optio
 
             for (year, count) in years {
                 let bar = "█".repeat(*count);
-                println!("{}: {} ({} book{})", year, bar, count, if *count == 1 { "" } else { "s" });
+                println!(
+                    "{}: {} ({} book{})",
+                    year,
+                    bar,
+                    count,
+                    if *count == 1 { "" } else { "s" }
+                );
             }
         }
     } else {
@@ -81,18 +94,24 @@ pub fn run(show_authors: bool, show_books: bool, show_reviews: bool, year: Optio
 }
 
 /// Show latest books summary
-fn show_books_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
+fn show_books_summary(books: &[crate::lib::models::ExtendedBook], limit: u32) {
     let mut sorted_books = books.to_vec();
     sorted_books.sort_by(|a, b| b.book.id.cmp(&a.book.id));
     sorted_books.truncate(limit as usize);
 
-    println!("{}", style(&format!("📚 Latest {} Books", sorted_books.len())).bold().green());
+    println!(
+        "{}",
+        style(&format!("📚 Latest {} Books", sorted_books.len()))
+            .bold()
+            .green()
+    );
     println!("{}", "═".repeat(50));
 
     for (i, book) in sorted_books.iter().enumerate() {
         let authors: Vec<String> = book.authors.iter().map(|a| a.name.clone()).collect();
 
-        println!("{}. {} {}",
+        println!(
+            "{}. {} {}",
             style(&format!("{:2}", i + 1)).dim(),
             style(&book.book.title).bold(),
             style(&format!("by {}", authors.join(", "))).dim()
@@ -117,7 +136,7 @@ fn show_books_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
 }
 
 /// Show latest reviews summary
-fn show_reviews_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
+fn show_reviews_summary(books: &[crate::lib::models::ExtendedBook], limit: u32) {
     let mut reviews_with_books = Vec::new();
     for book in books {
         for review in &book.reviews {
@@ -133,27 +152,35 @@ fn show_reviews_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
     reviews_with_books.sort_by(|a, b| b.0.id.cmp(&a.0.id));
     reviews_with_books.truncate(limit as usize);
 
-    println!("{}", style(&format!("📝 Latest {} Reviews", reviews_with_books.len())).bold().green());
+    println!(
+        "{}",
+        style(&format!("📝 Latest {} Reviews", reviews_with_books.len()))
+            .bold()
+            .green()
+    );
     println!("{}", "═".repeat(50));
 
     for (i, (review, book)) in reviews_with_books.iter().enumerate() {
         let authors: Vec<String> = book.authors.iter().map(|a| a.name.clone()).collect();
         let stars = "⭐".repeat(review.rating as usize);
 
-        println!("{}. {} {}/5 - {}",
+        println!(
+            "{}. {} {}/5 - {}",
             style(&format!("{:2}", i + 1)).dim(),
             style(&stars).yellow(),
             review.rating,
             style(&book.book.title).bold()
         );
 
-        println!("   {} {}",
+        println!(
+            "   {} {}",
             style("by").dim(),
             style(&authors.join(", ")).dim()
         );
 
         if let Some(date) = review.date_read {
-            println!("   {} {} ({})",
+            println!(
+                "   {} {} ({})",
                 style("📅").dim(),
                 format_date(&date),
                 style(&relative_date_description(&date)).dim()
@@ -182,7 +209,7 @@ fn show_reviews_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
 }
 
 /// Show authors summary
-fn show_authors_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
+fn show_authors_summary(books: &[crate::lib::models::ExtendedBook], limit: u32) {
     let mut author_stats: HashMap<String, usize> = HashMap::new();
 
     for book in books {
@@ -195,32 +222,49 @@ fn show_authors_summary(books: &[libro_cli::models::ExtendedBook], limit: u32) {
     sorted_authors.sort_by(|a, b| b.1.cmp(&a.1));
     sorted_authors.truncate(limit as usize);
 
-    println!("{}", style(&format!("👥 Top {} Authors", sorted_authors.len())).bold().green());
+    println!(
+        "{}",
+        style(&format!("👥 Top {} Authors", sorted_authors.len()))
+            .bold()
+            .green()
+    );
     println!("{}", "═".repeat(50));
 
     for (i, (author_name, book_count)) in sorted_authors.iter().enumerate() {
-        println!("{}. {}",
+        println!(
+            "{}. {}",
             style(&format!("{:2}", i + 1)).dim(),
             style(author_name).bold()
         );
 
-        println!("   📚 {} book{}", book_count, if *book_count == 1 { "" } else { "s" });
+        println!(
+            "   📚 {} book{}",
+            book_count,
+            if *book_count == 1 { "" } else { "s" }
+        );
 
-        let author_books: Vec<_> = books.iter()
+        let author_books: Vec<_> = books
+            .iter()
             .filter(|book| book.authors.iter().any(|a| a.name == *author_name))
             .take(3)
             .collect();
 
         for (j, book) in author_books.iter().enumerate() {
-            let prefix = if j == author_books.len() - 1 && author_books.len() < *book_count { "└─" } else { "├─" };
-            println!("   {} {}",
+            let prefix = if j == author_books.len() - 1 && author_books.len() < *book_count {
+                "└─"
+            } else {
+                "├─"
+            };
+            println!(
+                "   {} {}",
                 style(prefix).dim(),
                 style(&book.book.title).dim()
             );
         }
 
         if author_books.len() < *book_count {
-            println!("   {} {} more...",
+            println!(
+                "   {} {} more...",
                 style("└─").dim(),
                 style(&format!("and {} ", book_count - author_books.len())).dim()
             );

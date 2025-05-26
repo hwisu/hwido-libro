@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::errors::{validation, LibroError, LibroResult};
-use crate::models::*;
+use crate::lib::errors::{validation, LibroError, LibroResult};
+use crate::lib::models::*;
 
 /// Database operations struct that wraps a SQLite connection
 pub struct Database {
@@ -12,7 +12,7 @@ pub struct Database {
 impl Database {
     /// Create a new database instance and initialize schema
     pub fn new(path: &str) -> LibroResult<Self> {
-        let conn = crate::db::init_db(path)?;
+        let conn = crate::lib::db::init_db(path)?;
         Ok(Database { conn })
     }
 
@@ -426,14 +426,27 @@ impl Database {
 
     /// Delete a book and all associated data
     pub fn delete_book(&mut self, book_id: i64) -> LibroResult<()> {
-        let rows_affected = self
-            .conn
-            .execute("DELETE FROM books WHERE id = ?", params![book_id])?;
+        // 트랜잭션 시작
+        let tx = self.conn.transaction()?;
+
+        // 먼저 관련 리뷰들 삭제
+        tx.execute("DELETE FROM reviews WHERE book_id = ?", params![book_id])?;
+
+        // 관련 book_writers 링크 삭제 (ON DELETE CASCADE가 있지만 명시적으로)
+        tx.execute(
+            "DELETE FROM book_writers WHERE book_id = ?",
+            params![book_id],
+        )?;
+
+        // 마지막으로 도서 삭제
+        let rows_affected = tx.execute("DELETE FROM books WHERE id = ?", params![book_id])?;
 
         if rows_affected == 0 {
             return Err(LibroError::BookNotFound { id: book_id });
         }
 
+        // 트랜잭션 커밋
+        tx.commit()?;
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 use console::style;
 use std::process;
 
-use libro_cli::errors::{LibroError, LibroResult};
+use crate::lib::errors::{LibroError, LibroResult};
 
 /// Handle errors at the CLI level with user-friendly messages
 pub fn handle_cli_error(error: LibroError) -> ! {
@@ -175,7 +175,7 @@ pub mod validation {
         match year {
             Some(year) => {
                 let year = year as i32;
-                libro_cli::errors::validation::validate_year(year)?;
+                crate::lib::errors::validation::validate_year(year)?;
                 Ok(Some(year))
             }
             None => Ok(None),

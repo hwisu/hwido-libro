@@ -1,10 +1,10 @@
+use crate::lib::errors::LibroResult;
+use crate::lib::models::*;
 use crate::utils::date::{format_date, relative_date_description};
+use chrono::Datelike;
 use console::style;
-use libro_cli::errors::LibroResult;
-use libro_cli::models::*;
 use serde_json;
 use tabled::{Table, Tabled};
-use chrono::Datelike;
 
 /// Display format options
 #[derive(Debug, Clone)]
@@ -77,7 +77,8 @@ fn format_book_table(book: &ExtendedBook) -> String {
 
     // Reviews with detailed display
     if !book.reviews.is_empty() {
-        let avg_rating = book.reviews.iter().map(|r| r.rating).sum::<i32>() as f32 / book.reviews.len() as f32;
+        let avg_rating =
+            book.reviews.iter().map(|r| r.rating).sum::<i32>() as f32 / book.reviews.len() as f32;
         output.push('\n');
         output.push_str(&format!(
             "⭐ Reviews ({}) - Average: {:.1}/5\n",
@@ -411,9 +412,6 @@ mod tests {
         );
 
         // Test mixed ASCII and Unicode
-        assert_eq!(
-            truncate_string("Hello 안녕하세요 World", 10),
-            "Hello 안..."
-        );
+        assert_eq!(truncate_string("Hello 안녕하세요 World", 10), "Hello 안...");
     }
 }

@@ -1,8 +1,8 @@
+use crate::lib::db_operations::Database;
+use crate::lib::errors::LibroResult;
 use crate::utils::database::get_db_path;
 use crate::utils::error_handler::{print_info, print_success};
 use crate::utils::input::prompt_for_book_with_review;
-use libro_cli::db_operations::Database;
-use libro_cli::errors::LibroResult;
 
 /// Add a new book
 pub fn run() -> LibroResult<()> {
