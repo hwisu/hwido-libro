@@ -19,57 +19,44 @@ struct Cli {
 enum Commands {
     /// Add a new book
     Add,
-    /// Show book(s) with reviews by id or year
-    Brs {
-        /// 조회할 책 ID
-        id: Option<u32>,
-        /// 연도로 조회
+    /// Browse and search books (default command)
+    Browse {
+        /// Search query (title, author, or genre)
+        query: Option<String>,
+        /// Show only books from specific year
         #[arg(long)]
         year: Option<u32>,
-        /// JSON 형식 출력
+        /// Show in JSON format
         #[arg(long)]
         json: bool,
     },
-    /// Generate reading reports
+    /// Generate reading reports and summaries
     Report {
         /// 작가별 통계
         #[arg(long)]
-        author: bool,
+        authors: bool,
+        /// 최신 책 목록
+        #[arg(long)]
+        books: bool,
+        /// 최신 리뷰 목록
+        #[arg(long)]
+        reviews: bool,
         /// 연도별 필터
         #[arg(long)]
         year: Option<u32>,
         /// 연도별 차트
         #[arg(long)]
         years: bool,
+        /// 표시할 항목 수 (books, reviews, authors용)
+        #[arg(short, long, default_value = "10")]
+        limit: u32,
     },
     /// Add or edit a review for a book
     Review {
         /// 리뷰할 책 ID
         id: u32,
     },
-    /// Edit a book review using system editor
-    EditReview {
-        /// 수정할 리뷰의 책 ID
-        id: u32,
-    },
-    /// Show latest books summary
-    Books {
-        /// Number of books to show
-        #[arg(short, long, default_value = "10")]
-        limit: u32,
-    },
-    /// Show latest reviews summary
-    Reviews {
-        /// Number of reviews to show
-        #[arg(short, long, default_value = "10")]
-        limit: u32,
-    },
-    /// Show authors summary
-    Authors {
-        /// Number of authors to show
-        #[arg(short, long, default_value = "10")]
-        limit: u32,
-    },
+
 }
 
 fn main() {
@@ -77,17 +64,16 @@ fn main() {
 
     let result = match cli.command {
         Commands::Add => commands::add::run(),
-        Commands::Brs { id, year, json } => commands::brs::run(id, year, json),
+        Commands::Browse { query, year, json } => commands::browse::run(query, year, json),
         Commands::Report {
-            author,
+            authors,
+            books,
+            reviews,
             year,
             years,
-        } => commands::report::run(author, year, years),
+            limit,
+        } => commands::report::run(authors, books, reviews, year, years, limit),
         Commands::Review { id } => commands::review::run(id),
-        Commands::EditReview { id } => commands::edit_review::run(id),
-        Commands::Books { limit } => commands::books::run(limit),
-        Commands::Reviews { limit } => commands::reviews::run(limit),
-        Commands::Authors { limit } => commands::authors::run(limit),
     };
 
     handle_result(result);

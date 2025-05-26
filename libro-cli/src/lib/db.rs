@@ -12,7 +12,7 @@ pub fn init_db(path: &str) -> Result<Connection> {
             title     TEXT    NOT NULL,
             pages     INTEGER,
             pub_year  INTEGER,
-            genre     TEXT
+            genre     TEXT    NOT NULL
         );
         CREATE TABLE IF NOT EXISTS reviews (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,

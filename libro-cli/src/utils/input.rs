@@ -108,17 +108,40 @@ pub fn prompt_for_book() -> LibroResult<NewBook> {
         Some(year_input.parse()?)
     };
 
-    // Genre (optional)
-    let genre_input: String = Input::new()
-        .with_prompt("Genre (Enter to skip)")
-        .allow_empty(true)
-        .interact_text()?;
+        // Genre (required, with predefined options)
+    let genres = vec![
+        "Fiction",
+        "Non-fiction",
+        "Science & Technology",
+        "History & Biography",
+        "Self-Help & Business",
+        "Arts & Literature",
+        "Philosophy & Religion",
+        "Health & Lifestyle",
+        "Children & Young Adult",
+        "Other",
+    ];
 
-    let genre = if genre_input.trim().is_empty() {
-        None
-    } else {
-        Some(genre_input.trim().to_string())
-    };
+    let selection = Select::new()
+        .with_prompt(format!("{} {}", style("*").red().bold(), "Genre"))
+        .items(&genres)
+        .default(0)
+        .interact()?;
+
+         let genre = if genres[selection] == "Other" {
+         Input::new()
+             .with_prompt(format!("{} {}", style("*").red().bold(), "Enter custom genre"))
+             .validate_with(|input: &String| -> Result<(), &str> {
+                 if input.trim().is_empty() {
+                     Err("Genre cannot be empty")
+                 } else {
+                     Ok(())
+                 }
+             })
+             .interact_text()?
+     } else {
+         genres[selection].to_string()
+     };
 
     Ok(NewBook {
         title,

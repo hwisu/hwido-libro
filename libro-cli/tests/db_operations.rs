@@ -16,7 +16,7 @@ fn create_sample_book() -> NewBook {
         translators: vec!["Test Translator".to_string()],
         pages: Some(200),
         pub_year: Some(2023),
-        genre: Some("Fiction".to_string()),
+        genre: "Fiction".to_string(),
     }
 }
 
@@ -57,7 +57,7 @@ fn test_add_book_validation() {
         translators: vec![],
         pages: None,
         pub_year: None,
-        genre: None,
+        genre: "Fiction".to_string(),
     };
 
     let result = db.add_book(&invalid_book);
@@ -71,7 +71,7 @@ fn test_add_book_validation() {
         translators: vec![],
         pages: None,
         pub_year: None,
-        genre: None,
+        genre: "Fiction".to_string(),
     };
 
     let result = db.add_book(&invalid_book);
@@ -274,7 +274,7 @@ fn test_update_book() {
         title: "Updated Title".to_string(),
         pages: Some(300),
         pub_year: Some(2024),
-        genre: Some("Non-fiction".to_string()),
+        genre: "Non-fiction".to_string(),
     };
 
     db.update_book(book_id, &updated_book)
@@ -290,7 +290,7 @@ fn test_update_book() {
     assert_eq!(books[0].book.title, "Updated Title");
     assert_eq!(books[0].book.pages, Some(300));
     assert_eq!(books[0].book.pub_year, Some(2024));
-    assert_eq!(books[0].book.genre, Some("Non-fiction".to_string()));
+    assert_eq!(books[0].book.genre, "Non-fiction".to_string());
 }
 
 #[test]
@@ -384,7 +384,7 @@ fn test_writer_deduplication() {
         translators: vec![],
         pages: None,
         pub_year: None,
-        genre: None,
+        genre: "Fiction".to_string(),
     };
 
     // Add second book with same author "John Doe"
@@ -394,7 +394,7 @@ fn test_writer_deduplication() {
         translators: vec![],
         pages: None,
         pub_year: None,
-        genre: None,
+        genre: "Fiction".to_string(),
     };
 
     let book1_id = db.add_book(&book1).expect("Failed to add book 1");

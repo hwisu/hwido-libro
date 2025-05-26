@@ -73,9 +73,7 @@ fn format_book_table(book: &ExtendedBook) -> String {
         output.push_str(&format!("Publication Year: {}\n", year));
     }
 
-    if let Some(genre) = &book.book.genre {
-        output.push_str(&format!("Genre: {}\n", genre));
-    }
+    output.push_str(&format!("Genre: {}\n", &book.book.genre));
 
     // Reviews with detailed display
     if !book.reviews.is_empty() {
@@ -243,12 +241,13 @@ fn format_review_detailed(review: &Review) -> String {
     output
 }
 
-/// Truncate a string to a maximum length with ellipsis
+/// Truncate a string to a maximum length with ellipsis (Unicode-safe)
 fn truncate_string(s: &str, max_len: usize) -> String {
-    if s.len() <= max_len {
+    if s.chars().count() <= max_len {
         s.to_string()
     } else {
-        format!("{}...", &s[..max_len.saturating_sub(3)])
+        let truncated: String = s.chars().take(max_len.saturating_sub(3)).collect();
+        format!("{}...", truncated)
     }
 }
 
@@ -362,7 +361,7 @@ mod tests {
                 title: "Test Book".to_string(),
                 pages: Some(200),
                 pub_year: Some(2023),
-                genre: Some("Fiction".to_string()),
+                genre: "Fiction".to_string(),
             },
             authors: vec![Writer {
                 id: Some(1),
@@ -402,6 +401,19 @@ mod tests {
         assert_eq!(
             truncate_string("this is a very long string", 10),
             "this is..."
+        );
+
+        // Test Unicode handling (Korean characters)
+        assert_eq!(truncate_string("안녕하세요", 10), "안녕하세요");
+        assert_eq!(
+            truncate_string("간단한 리뷰 테스트를 통해서 되는지 안되는지 보자구", 10),
+            "간단한 리뷰 ..."
+        );
+
+        // Test mixed ASCII and Unicode
+        assert_eq!(
+            truncate_string("Hello 안녕하세요 World", 10),
+            "Hello 안..."
         );
     }
 }

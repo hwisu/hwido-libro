@@ -8,7 +8,7 @@ pub struct Book {
     pub title: String,
     pub pages: Option<i32>,
     pub pub_year: Option<i32>,
-    pub genre: Option<String>,
+    pub genre: String, // Now required
 }
 
 /// Review entity for book reviews
@@ -88,7 +88,7 @@ pub struct NewBook {
     pub translators: Vec<String>,
     pub pages: Option<i32>,
     pub pub_year: Option<i32>,
-    pub genre: Option<String>,
+    pub genre: String, // Now required
 }
 
 /// Input struct for creating a new review
