@@ -1,6 +1,7 @@
 //! 애플리케이션 상태 관리
 
 use crate::lib::models::ExtendedBook;
+use crate::tui::ui::report::ReportView;
 use chrono::Datelike;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,6 +59,9 @@ pub struct AppState {
 
     // 출간년도 선택 관련
     pub year_selected_index: usize, // 선택된 년도 인덱스
+
+    // 리포트 관련
+    pub current_report_view: ReportView, // 현재 리포트 뷰
 }
 
 impl Default for AppState {
@@ -93,6 +97,9 @@ impl Default for AppState {
 
             // 출간년도 선택 관련
             year_selected_index: 0,
+
+            // 리포트 관련
+            current_report_view: ReportView::default(),
         }
     }
 }
@@ -316,5 +323,60 @@ impl AppState {
     pub fn select_current_year(&mut self) {
         let selected_year = self.get_selected_year();
         self.form_pub_year = selected_year.to_string();
+    }
+
+    /// 리포트 뷰를 변경합니다
+    pub fn set_report_view(&mut self, view: ReportView) {
+        self.current_report_view = view;
+    }
+
+    /// 선택된 도서 정보로 편집 폼을 초기화합니다
+    pub fn init_edit_form_from_selected_book(&mut self) {
+        if let Some(book) = self.books.get(self.selected_book_index) {
+            self.editing_book_id = book.book.id.map(|id| id as u32);
+            self.form_title = book.book.title.clone();
+
+            // 저자들을 쉼표로 구분된 문자열로 변환
+            self.form_authors = book
+                .authors
+                .iter()
+                .map(|a| a.name.clone())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            // 번역자들을 쉼표로 구분된 문자열로 변환
+            self.form_translators = book
+                .translators
+                .iter()
+                .map(|t| t.name.clone())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            self.form_genre = book.book.genre.clone();
+
+            self.form_pages = book.book.pages.map(|p| p.to_string()).unwrap_or_default();
+
+            self.form_pub_year = book
+                .book
+                .pub_year
+                .map(|y| y.to_string())
+                .unwrap_or_default();
+
+            // 폼 필드 인덱스 초기화
+            self.form_field_index = 0;
+
+            // 장르와 년도 선택 인덱스 초기화
+            let genres = Self::get_genres();
+            if let Some(index) = genres.iter().position(|&g| g == book.book.genre) {
+                self.genre_selected_index = index;
+            }
+
+            if let Some(year) = book.book.pub_year {
+                let years = Self::get_years();
+                if let Some(index) = years.iter().position(|&y| y == year as u32) {
+                    self.year_selected_index = index;
+                }
+            }
+        }
     }
 }

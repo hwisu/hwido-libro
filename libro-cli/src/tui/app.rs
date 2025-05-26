@@ -15,7 +15,7 @@ use crate::{
         events::{key_to_action, AppEvent, EventHandler, KeyAction},
         input::TextInput,
         state::{AppMode, AppState, Screen},
-        ui::{add_book, book_list, help, review, search},
+        ui::{add_book, book_list, edit_book, help, report, review, search},
     },
 };
 
@@ -123,6 +123,12 @@ impl App {
             Screen::AddBook => {
                 add_book::render_add_book(f, chunks[1], &self.state, &mut self.text_input)
             }
+            Screen::EditBook => {
+                edit_book::render_edit_book(f, chunks[1], &self.state, &mut self.text_input)
+            }
+            Screen::Report => {
+                report::render_report(f, chunks[1], &self.state, &self.state.current_report_view)
+            }
             _ => self.render_placeholder(f, chunks[1], "Coming Soon"),
         }
 
@@ -147,6 +153,8 @@ impl App {
             Screen::Review => "리뷰",
             Screen::Search => "검색",
             Screen::AddBook => "도서 추가",
+            Screen::EditBook => "도서 편집",
+            Screen::Report => "리포트",
             _ => "기타",
         };
 
@@ -228,8 +236,8 @@ impl App {
                             self.state.search_query.clear(); // 검색어도 초기화
                             self.state.search_selected_index = 0;
                         }
-                        Screen::AddBook => {
-                            // 도서 추가 화면에서는 BookList로 돌아가기
+                        Screen::AddBook | Screen::EditBook => {
+                            // 도서 추가/편집 화면에서는 BookList로 돌아가기
                             self.state.current_screen = Screen::BookList;
                             self.state.clear_form(); // 폼 초기화
                             self.state.mode = AppMode::Normal; // Normal 모드로 복원
@@ -250,6 +258,16 @@ impl App {
                     self.text_input = TextInput::with_text(current_value);
                 }
             }
+            KeyAction::EditBook => {
+                if self.state.mode == AppMode::Normal && !self.state.books.is_empty() {
+                    self.state.set_screen(Screen::EditBook);
+                    self.state.init_edit_form_from_selected_book(); // 선택된 도서 정보로 폼 초기화
+                    self.state.mode = AppMode::FormInput; // 바로 입력 모드로 전환
+                                                          // 첫 번째 필드(제목)의 값으로 텍스트 입력 초기화
+                    let current_value = self.state.get_current_form_field_value();
+                    self.text_input = TextInput::with_text(current_value);
+                }
+            }
             KeyAction::Search => {
                 if self.state.mode == AppMode::Normal {
                     self.state.set_screen(Screen::Search);
@@ -262,6 +280,24 @@ impl App {
             KeyAction::Report => {
                 if self.state.mode == AppMode::Normal {
                     self.state.set_screen(Screen::Report);
+                }
+            }
+            KeyAction::AuthorReport => {
+                if self.state.mode == AppMode::Normal && self.state.current_screen == Screen::Report
+                {
+                    self.state.set_report_view(report::ReportView::Authors);
+                }
+            }
+            KeyAction::YearReport => {
+                if self.state.mode == AppMode::Normal && self.state.current_screen == Screen::Report
+                {
+                    self.state.set_report_view(report::ReportView::Years);
+                }
+            }
+            KeyAction::RecentReport => {
+                if self.state.mode == AppMode::Normal && self.state.current_screen == Screen::Report
+                {
+                    self.state.set_report_view(report::ReportView::Recent);
                 }
             }
             KeyAction::AddReview => {
@@ -333,8 +369,8 @@ impl App {
                 match self.state.mode {
                     AppMode::Edit => {
                         match self.state.current_screen {
-                            Screen::AddBook => {
-                                // 도서 추가 화면에서 Ctrl+S: 현재 필드 저장 후 Normal 모드로
+                            Screen::AddBook | Screen::EditBook => {
+                                // 도서 추가/편집 화면에서 Ctrl+S: 현재 필드 저장 후 Normal 모드로
                                 let text = self.text_input.get_text();
                                 self.state.set_current_form_field_value(text);
                                 self.state.mode = AppMode::Normal;
@@ -356,12 +392,20 @@ impl App {
                             let text = self.text_input.get_text();
                             self.state.set_current_form_field_value(text);
                             self.handle_save_book_and_exit();
+                        } else if self.state.current_screen == Screen::EditBook {
+                            // EditBook 화면에서 Ctrl+S: 현재 필드 저장 후 전체 도서 업데이트하고 나가기
+                            let text = self.text_input.get_text();
+                            self.state.set_current_form_field_value(text);
+                            self.handle_update_book_and_exit();
                         }
                     }
                     AppMode::Normal => {
                         if self.state.current_screen == Screen::AddBook {
                             // Normal 모드에서 도서 추가 화면에서 Ctrl+S: 도서 저장하고 나가기
                             self.handle_save_book_and_exit();
+                        } else if self.state.current_screen == Screen::EditBook {
+                            // Normal 모드에서 도서 편집 화면에서 Ctrl+S: 도서 업데이트하고 나가기
+                            self.handle_update_book_and_exit();
                         }
                     }
                     _ => {}
@@ -387,7 +431,9 @@ impl App {
             }
             // 폼 네비게이션
             KeyAction::NextField => {
-                if self.state.current_screen == Screen::AddBook {
+                if self.state.current_screen == Screen::AddBook
+                    || self.state.current_screen == Screen::EditBook
+                {
                     match self.state.mode {
                         AppMode::FormInput => {
                             // 현재 필드 값 저장
@@ -411,7 +457,9 @@ impl App {
                 }
             }
             KeyAction::PrevField => {
-                if self.state.current_screen == Screen::AddBook {
+                if self.state.current_screen == Screen::AddBook
+                    || self.state.current_screen == Screen::EditBook
+                {
                     match self.state.mode {
                         AppMode::FormInput => {
                             // 현재 필드 값 저장
@@ -441,7 +489,9 @@ impl App {
                         self.text_input.insert_char(c);
                     }
                     AppMode::FormInput => {
-                        if self.state.current_screen == Screen::AddBook {
+                        if self.state.current_screen == Screen::AddBook
+                            || self.state.current_screen == Screen::EditBook
+                        {
                             if self.state.is_genre_field() {
                                 // 장르 필드에서는 문자 입력 시 장르 선택 모드로 전환
                                 self.state.mode = AppMode::GenreSelect;
@@ -471,8 +521,10 @@ impl App {
                         }
                     }
                     AppMode::Normal => {
-                        // Normal 모드에서 도서 추가 화면에서 문자를 입력하면 FormInput 모드로 전환
-                        if self.state.current_screen == Screen::AddBook {
+                        // Normal 모드에서 도서 추가/편집 화면에서 문자를 입력하면 FormInput 모드로 전환
+                        if self.state.current_screen == Screen::AddBook
+                            || self.state.current_screen == Screen::EditBook
+                        {
                             if self.state.is_genre_field() {
                                 // 장르 필드에서는 문자 입력 시 장르 선택 모드로 전환
                                 self.state.mode = AppMode::GenreSelect;
@@ -512,7 +564,8 @@ impl App {
                     self.text_input.delete_char();
                 }
                 AppMode::FormInput => {
-                    if !(self.state.current_screen == Screen::AddBook
+                    if !((self.state.current_screen == Screen::AddBook
+                        || self.state.current_screen == Screen::EditBook)
                         && (self.state.is_genre_field() || self.state.is_year_field()))
                     {
                         self.text_input.delete_char();
@@ -525,7 +578,8 @@ impl App {
                     self.text_input.backspace();
                 }
                 AppMode::FormInput => {
-                    if !(self.state.current_screen == Screen::AddBook
+                    if !((self.state.current_screen == Screen::AddBook
+                        || self.state.current_screen == Screen::EditBook)
                         && (self.state.is_genre_field() || self.state.is_year_field()))
                     {
                         self.text_input.backspace();
@@ -575,7 +629,8 @@ impl App {
                     self.text_input.clear_current_line();
                 }
                 AppMode::FormInput => {
-                    if !(self.state.current_screen == Screen::AddBook
+                    if !((self.state.current_screen == Screen::AddBook
+                        || self.state.current_screen == Screen::EditBook)
                         && (self.state.is_genre_field() || self.state.is_year_field()))
                     {
                         self.text_input.clear_current_line();
@@ -704,7 +759,9 @@ impl App {
                     }
                     AppMode::FormInput => {
                         // FormInput 모드에서 Enter: 장르/년도 필드면 선택 모드로, 아니면 Edit 모드로
-                        if self.state.current_screen == Screen::AddBook {
+                        if self.state.current_screen == Screen::AddBook
+                            || self.state.current_screen == Screen::EditBook
+                        {
                             if self.state.is_genre_field() {
                                 // 장르 필드에서 Enter를 누르면 장르 선택 모드로 전환
                                 self.state.mode = AppMode::GenreSelect;
@@ -749,8 +806,8 @@ impl App {
                     }
                     AppMode::Normal => {
                         match self.state.current_screen {
-                            Screen::AddBook => {
-                                // 도서 추가 화면에서 Enter: 현재 필드 편집 시작
+                            Screen::AddBook | Screen::EditBook => {
+                                // 도서 추가/편집 화면에서 Enter: 현재 필드 편집 시작
                                 if self.state.is_genre_field() {
                                     // 장르 필드에서 Enter를 누르면 장르 선택 모드로 전환
                                     self.state.mode = AppMode::GenreSelect;
@@ -906,6 +963,99 @@ impl App {
 
         // 편집 상태 초기화
         self.state.editing_review_index = None;
+    }
+
+    /// 도서 업데이트하고 나가기를 처리합니다
+    fn handle_update_book_and_exit(&mut self) {
+        // 폼 유효성 검사
+        if let Err(error_msg) = self.state.validate_form() {
+            self.state.set_message(error_msg);
+            return;
+        }
+
+        if let Some(book_id) = self.state.editing_book_id {
+            // 저자 파싱 (쉼표로 구분)
+            let authors: Vec<String> = self
+                .state
+                .form_authors
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            // 번역자 파싱 (쉼표로 구분, 선택사항)
+            let translators: Vec<String> = if self.state.form_translators.trim().is_empty() {
+                Vec::new()
+            } else {
+                self.state
+                    .form_translators
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            };
+
+            // 업데이트할 도서 정보 생성
+            let updated_book = crate::lib::models::NewBook {
+                title: self.state.form_title.trim().to_string(),
+                authors,
+                translators,
+                genre: self.state.form_genre.trim().to_string(),
+                pages: if self.state.form_pages.trim().is_empty() {
+                    None
+                } else {
+                    self.state.form_pages.trim().parse().ok()
+                },
+                pub_year: if self.state.form_pub_year.trim().is_empty() {
+                    None
+                } else {
+                    self.state.form_pub_year.trim().parse().ok()
+                },
+            };
+
+            // 데이터베이스에서 업데이트
+            match self.database.add_book(&updated_book) {
+                Ok(new_book_id) => {
+                    // 기존 도서 삭제
+                    if let Err(e) = self.database.delete_book(book_id as i64) {
+                        self.state
+                            .set_message(format!("❌ 기존 도서 삭제 실패: {}", e));
+                        return;
+                    }
+
+                    if let Err(e) = self.load_books() {
+                        self.state
+                            .set_message(format!("도서 목록 로드 실패: {}", e));
+                    } else {
+                        // 업데이트된 도서를 찾아서 선택
+                        if let Some(updated_book_index) = self
+                            .state
+                            .books
+                            .iter()
+                            .position(|book| book.book.id == Some(new_book_id))
+                        {
+                            self.state.selected_book_index = updated_book_index;
+                        }
+
+                        self.state.set_message(format!(
+                            "✅ 도서가 업데이트되었습니다! (ID: {})",
+                            new_book_id
+                        ));
+                        // 성공 시 도서 목록으로 돌아가기
+                        self.state.current_screen = Screen::BookList;
+                        self.state.clear_form();
+                        self.state.mode = AppMode::Normal;
+                    }
+                }
+                Err(e) => {
+                    self.state
+                        .set_message(format!("❌ 도서 업데이트 실패: {}", e));
+                }
+            }
+        } else {
+            self.state
+                .set_message("❌ 편집할 도서 ID가 없습니다".to_string());
+        }
     }
 
     /// 도서 저장하고 나가기를 처리합니다
